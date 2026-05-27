@@ -15,7 +15,9 @@ use crate::cli::Cli;
 
 /// Top-level application: owns and coordinates all subsystems.
 pub struct App {
+    #[allow(dead_code)]
     config: Arc<RwLock<AlloyConfig>>,
+    #[allow(dead_code)]
     workspace: Arc<Workspace>,
     lsp_manager: Arc<LspManager>,
     telemetry_server: TelemetryServer,

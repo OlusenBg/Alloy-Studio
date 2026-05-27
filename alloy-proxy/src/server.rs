@@ -11,7 +11,7 @@ use alloy_rpc::types::FileEvent;
 use crossbeam_channel::Receiver;
 use futures::{SinkExt, StreamExt};
 use tokio_util::codec::Framed;
-use tracing::{debug, error, info, warn};
+use tracing::{debug, info, warn};
 
 use crate::handler::RequestHandler;
 
@@ -232,14 +232,11 @@ impl ProxyServer {
                         .collect(),
                     Some(serde_json::Value::String(s)) => {
                         // Try to decode as base64; fall back to raw UTF-8 bytes.
-                        use std::io::Read;
-                        let mut buf = Vec::new();
                         if let Ok(decoded) = base64_decode(s) {
-                            buf = decoded;
+                            decoded
                         } else {
-                            buf = s.as_bytes().to_vec();
+                            s.as_bytes().to_vec()
                         }
-                        buf
                     }
                     _ => vec![],
                 };
@@ -347,7 +344,6 @@ fn error_response(id: RpcId, code: i32, message: &str) -> RpcMessage {
 ///
 /// We inline this to avoid adding a new dependency for a single utility use.
 fn base64_decode(input: &str) -> Result<Vec<u8>, ()> {
-    use std::convert::TryInto;
     const TABLE: &[u8; 64] =
         b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 

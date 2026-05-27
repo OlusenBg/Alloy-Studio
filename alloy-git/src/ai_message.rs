@@ -162,7 +162,7 @@ fn diff_stats_for(fs: &FileStatus, diffs: &[FileDiff]) -> (u32, u32) {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::diff::{DiffHunk, DiffLine, DiffLineKind, FileDiff};
+    use crate::diff::FileDiff;
     use crate::status::{FileStatus, GitStatus, StatusKind};
 
     fn make_status(files: Vec<FileStatus>) -> GitStatus {

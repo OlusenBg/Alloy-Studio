@@ -3,7 +3,7 @@
 use tokio::sync::broadcast;
 
 /// A lightweight wrapper around a broadcast channel used to signal shutdown.
-pub struct ShutdownSignal(broadcast::Sender<()>);
+pub struct ShutdownSignal(#[allow(dead_code)] broadcast::Sender<()>);
 
 impl ShutdownSignal {
     /// Create a new shutdown signal.
@@ -12,6 +12,7 @@ impl ShutdownSignal {
     }
 
     /// Subscribe to the shutdown signal.
+    #[allow(dead_code)]
     pub fn subscribe(&self) -> broadcast::Receiver<()> {
         self.0.subscribe()
     }

@@ -30,6 +30,7 @@ pub struct ServerHandle {
 // ── LspManager ───────────────────────────────────────────────────────────────
 
 /// Manages zero or more running language servers for a single workspace.
+#[allow(dead_code)]
 pub struct LspManager {
     /// language-id → live server handle.
     servers: DashMap<String, ServerHandle>,
@@ -69,7 +70,7 @@ impl LspManager {
 
         let arg_refs: Vec<&str> = args.iter().map(|s| s.as_str()).collect();
 
-        let mut client = LspClient::spawn(&cmd, &arg_refs, &[])
+        let client = LspClient::spawn(&cmd, &arg_refs, &[])
             .await
             .with_context(|| format!("failed to spawn LSP server for language '{language_id}'"))?;
 

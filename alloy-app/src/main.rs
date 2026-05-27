@@ -5,8 +5,6 @@ mod cli;
 mod logging;
 mod signal;
 
-use clap::Parser as _;
-
 fn main() -> anyhow::Result<()> {
     let args = cli::Cli::parse_args();
 

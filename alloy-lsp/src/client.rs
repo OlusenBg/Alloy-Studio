@@ -18,7 +18,7 @@ use tokio::{
 use tracing::{debug, warn};
 
 use crate::capabilities::make_client_capabilities;
-use crate::protocol::{JsonRpcMessage, make_notification, make_request};
+use crate::protocol::JsonRpcMessage;
 
 // ── constants ────────────────────────────────────────────────────────────────
 
@@ -166,19 +166,17 @@ impl LspClient {
             notification::Initialized,
             request::Initialize,
         };
+        let parsed_uri: url::Url = root_uri
+            .parse()
+            .with_context(|| format!("invalid root URI: {root_uri}"))?;
 
+        #[allow(deprecated)]
         let params = InitializeParams {
             process_id: Some(std::process::id()),
-            root_uri: Some(lsp_types::Uri::from(
-                root_uri.parse::<url::Url>()
-                    .with_context(|| format!("invalid root URI: {root_uri}"))?,
-            )),
+            root_uri: Some(parsed_uri.clone()),
             capabilities: make_client_capabilities(),
             workspace_folders: Some(vec![lsp_types::WorkspaceFolder {
-                uri: lsp_types::Uri::from(
-                    root_uri.parse::<url::Url>()
-                        .with_context(|| format!("invalid root URI: {root_uri}"))?,
-                ),
+                uri: parsed_uri,
                 name: "workspace".to_string(),
             }]),
             client_info: Some(lsp_types::ClientInfo {
@@ -189,7 +187,7 @@ impl LspClient {
         };
 
         let result: InitializeResult = self
-            .request::<_, InitializeResult>(Initialize::METHOD, params)
+            .request::<_, InitializeResult>(<Initialize as lsp_types::request::Request>::METHOD, params)
             .await?;
 
         let caps = result.capabilities;
@@ -198,8 +196,11 @@ impl LspClient {
         *self.server_caps.write() = Some(caps.clone());
 
         // Send the `initialized` notification (no parameters required).
-        self.notify(Initialized::METHOD, lsp_types::InitializedParams {})
-            .await?;
+        self.notify(
+            <Initialized as lsp_types::notification::Notification>::METHOD,
+            lsp_types::InitializedParams {},
+        )
+        .await?;
 
         Ok(caps)
     }
@@ -297,12 +298,18 @@ impl LspClient {
 
         // Best-effort shutdown request.
         let _ = self
-            .request::<_, serde_json::Value>(Shutdown::METHOD, serde_json::Value::Null)
+            .request::<_, serde_json::Value>(
+                <Shutdown as lsp_types::request::Request>::METHOD,
+                serde_json::Value::Null,
+            )
             .await;
 
         // Best-effort exit notification.
         let _ = self
-            .notify(Exit::METHOD, serde_json::Value::Null)
+            .notify(
+                <Exit as lsp_types::notification::Notification>::METHOD,
+                serde_json::Value::Null,
+            )
             .await;
 
         let _ = self.process.kill().await;
@@ -402,8 +409,6 @@ pub async fn read_message(stdout: &mut ChildStdout) -> anyhow::Result<Option<Str
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-
     #[test]
     fn write_message_format() {
         // Verify the Content-Length frame is well-formed.
