@@ -1,0 +1,27 @@
+[package]
+name        = "alloy-telemetry"
+description = "Live robot telemetry: TCP listener, protocol decoder, broadcast stream, ring-buffer history"
+publish     = false
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+alloy-rpc  = { path = "../alloy-rpc" }
+tokio      = { workspace = true }
+tokio-util = { workspace = true }
+tokio-stream = { workspace = true }
+futures    = { workspace = true }
+serde      = { workspace = true }
+serde_json = { workspace = true }
+anyhow     = { workspace = true }
+thiserror  = { workspace = true }
+tracing    = { workspace = true }
+bytes      = { workspace = true }
+chrono     = { workspace = true }
+parking_lot = { workspace = true }
+dashmap    = { workspace = true }
+
+[dev-dependencies]
+tokio-test        = { workspace = true }
+pretty_assertions = { workspace = true }

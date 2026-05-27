@@ -1,0 +1,28 @@
+[package]
+name        = "alloy-lsp"
+description = "LSP client: spawns language servers, manages capability negotiation, FTC JDTLS config"
+publish     = false
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+alloy-rpc  = { path = "../alloy-rpc" }
+alloy-core = { path = "../alloy-core" }
+tokio      = { workspace = true }
+tokio-util = { workspace = true }
+tokio-stream = { workspace = true }
+futures    = { workspace = true }
+serde      = { workspace = true }
+serde_json = { workspace = true }
+anyhow     = { workspace = true }
+thiserror  = { workspace = true }
+tracing    = { workspace = true }
+lsp-types  = { workspace = true }
+bytes      = { workspace = true }
+dashmap    = { workspace = true }
+parking_lot = { workspace = true }
+once_cell  = { workspace = true }
+walkdir    = { workspace = true }
+which      = { workspace = true }
+uuid       = { workspace = true }

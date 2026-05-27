@@ -1,0 +1,43 @@
+[package]
+name        = "alloy-core"
+description = "Editor primitives: buffer, syntax, config, workspace, search"
+publish     = false
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+alloy-rpc = { path = "../alloy-rpc" }
+tokio     = { workspace = true }
+tokio-stream = { workspace = true }
+futures   = { workspace = true }
+serde     = { workspace = true }
+serde_json = { workspace = true }
+toml      = { workspace = true }
+toml_edit = { workspace = true }
+anyhow    = { workspace = true }
+thiserror = { workspace = true }
+tracing   = { workspace = true }
+ropey     = { workspace = true }
+tree-sitter           = { workspace = true }
+tree-sitter-highlight = { workspace = true }
+tree-sitter-java      = { workspace = true }
+notify    = { workspace = true }
+walkdir   = { workspace = true }
+dirs      = { workspace = true }
+which     = { workspace = true }
+dashmap   = { workspace = true }
+parking_lot = { workspace = true }
+crossbeam-channel = { workspace = true }
+once_cell = { workspace = true }
+indexmap  = { workspace = true }
+bytes     = { workspace = true }
+regex     = { workspace = true }
+uuid      = { workspace = true }
+chrono    = { workspace = true }
+
+[dev-dependencies]
+tokio-test        = { workspace = true }
+pretty_assertions = { workspace = true }
+insta             = { workspace = true }
+tempfile          = { workspace = true }

@@ -1,0 +1,31 @@
+[package]
+name        = "alloy-proxy"
+description = "Remote filesystem proxy: IPC server, file ops, file watcher, digest cache"
+publish     = false
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+alloy-rpc  = { path = "../alloy-rpc" }
+tokio      = { workspace = true }
+tokio-util = { workspace = true }
+futures    = { workspace = true }
+serde      = { workspace = true }
+serde_json = { workspace = true }
+anyhow     = { workspace = true }
+thiserror  = { workspace = true }
+tracing    = { workspace = true }
+bytes      = { workspace = true }
+notify     = { workspace = true }
+walkdir    = { workspace = true }
+sha2       = { workspace = true }
+hex        = { workspace = true }
+dashmap    = { workspace = true }
+crossbeam-channel = { workspace = true }
+parking_lot = { workspace = true }
+
+[dev-dependencies]
+tokio-test        = { workspace = true }
+tempfile          = { workspace = true }
+pretty_assertions = { workspace = true }

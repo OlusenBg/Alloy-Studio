@@ -1,0 +1,103 @@
+[workspace]
+resolver = "2"
+members = [
+    "alloy-rpc",
+    "alloy-core",
+    "alloy-lsp",
+    "alloy-git",
+    "alloy-gradle",
+    "alloy-telemetry",
+    "alloy-proxy",
+    "alloy-app",
+]
+
+[workspace.package]
+version      = "0.1.0"
+edition      = "2021"
+authors      = ["Alloy Studio Contributors"]
+license      = "Apache-2.0"
+repository   = "https://github.com/olusenbg/alloy-studio"
+rust-version = "1.87"
+
+[workspace.dependencies]
+# Async runtime
+tokio        = { version = "1",   features = ["full"] }
+tokio-util   = { version = "0.7", features = ["codec", "io"] }
+tokio-stream = { version = "0.1", features = ["sync"] }
+futures      = "0.3"
+
+# Serialization
+serde        = { version = "1", features = ["derive"] }
+serde_json   = "1"
+toml         = "0.8"
+toml_edit    = "0.22"
+
+# Error handling
+anyhow    = "1"
+thiserror = "1"
+
+# Logging
+tracing            = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "fmt"] }
+
+# Text / rope
+ropey = "1.6"
+
+# Syntax (tree-sitter)
+tree-sitter           = "0.22"
+tree-sitter-highlight = "0.22"
+tree-sitter-java      = "0.21"
+
+# Config / file watching
+notify = { version = "6", features = ["crossbeam-channel"] }
+
+# Filesystem / paths
+walkdir  = "2"
+dirs     = "5"
+which    = "4"
+tempfile = "3"
+
+# Git
+git2 = { version = "0.18", default-features = false, features = ["vendored-libgit2"] }
+
+# Concurrency
+dashmap           = "5"
+parking_lot       = "0.12"
+crossbeam-channel = "0.5"
+once_cell         = "1"
+indexmap          = "2"
+
+# Bytes / codec
+bytes = "1"
+
+# Utilities
+regex   = "1"
+semver  = "1"
+chrono  = { version = "0.4", features = ["serde"] }
+uuid    = { version = "1",   features = ["v4", "serde"] }
+sha2    = "0.10"
+hex     = "0.4"
+clap    = { version = "4",   features = ["derive", "env"] }
+url     = "2"
+
+# LSP types
+lsp-types = "0.95"
+
+# Testing — listed here so workspace members can inherit with `{ workspace = true }`
+tokio-test        = "0.4"
+pretty_assertions = "1"
+insta             = { version = "1", features = ["json"] }
+
+[profile.dev]
+opt-level = 0
+debug     = true
+
+[profile.fastdev]
+inherits  = "dev"
+opt-level = 1
+
+[profile.release]
+opt-level     = 3
+lto           = "thin"
+codegen-units = 1
+strip         = "symbols"
