@@ -1,6 +1,6 @@
 //! FTC-specific repair engine: maps known build errors to actionable suggestions.
 
-use alloy_rpc::types::{BuildError, BuildErrorKind};
+use alloy_rpc::types::BuildError;
 use regex::Regex;
 
 /// A human-readable suggestion with an optional automatic patch.
@@ -79,17 +79,17 @@ fn make_rules() -> Vec<CompiledRule> {
             "java-source-compat",
             r"Unsupported class file major version (\d+)",
             "Java compatibility mismatch",
-            "Your Java version is too new for the configured source/target compatibility. \
-             Add the following to your module build.gradle:\n\n\
-             android {\n    compileOptions {\n        sourceCompatibility JavaVersion.VERSION_11\n\
-             \        targetCompatibility JavaVersion.VERSION_11\n    }\n}",
+            "Your Java version is too new for the configured source/target compatibility. Add the following to your module build.gradle:\n\nandroid {\n    compileOptions {\n        sourceCompatibility JavaVersion.VERSION_11\n        targetCompatibility JavaVersion.VERSION_11\n    }\n}",
             0.85,
             false,
             |_msg| RepairPatch::Instructions(
-                "In your module build.gradle add:\n\n\
-                 android {\n    compileOptions {\n        sourceCompatibility JavaVersion.VERSION_11\n\
-                 \        targetCompatibility JavaVersion.VERSION_11\n    }\n}"
-                    .into(),
+                concat!(
+                    "In your module build.gradle add:\n\n",
+                    "android {\n    compileOptions {\n",
+                    "        sourceCompatibility JavaVersion.VERSION_11\n",
+                    "        targetCompatibility JavaVersion.VERSION_11\n",
+                    "    }\n}"
+                ).into(),
             ),
         ),
         // Rule 3 — java-home-not-set
@@ -148,11 +148,13 @@ fn make_rules() -> Vec<CompiledRule> {
             0.75,
             false,
             |_msg| RepairPatch::Instructions(
-                "Add to the root build.gradle `allprojects` block:\n\
-                 \n    configurations.all {\n\
-                 \        resolutionStrategy.preferProjectModules()\n    }\n\
-                 \nAlternatively, exclude the conflicting module from one of the dependencies."
-                    .into(),
+                concat!(
+                    "Add to the root build.gradle `allprojects` block:\n\n",
+                    "    configurations.all {\n",
+                    "        resolutionStrategy.preferProjectModules()\n",
+                    "    }\n\n",
+                    "Alternatively, exclude the conflicting module from one of the dependencies."
+                ).into(),
             ),
         ),
         // Rule 7 — compile-error-generic

@@ -1,0 +1,300 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+permissions:
+  contents: write
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    name: Build — ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # ── Linux x86_64 ────────────────────────────────────────────────────
+          - name: linux-x86_64
+            os: ubuntu-22.04
+            target: x86_64-unknown-linux-gnu
+            artifact_suffix: linux-x86_64
+            cross: false
+
+          # ── macOS arm64 (Apple Silicon) ─────────────────────────────────────
+          - name: macos-arm64
+            os: macos-14
+            target: aarch64-apple-darwin
+            artifact_suffix: macos-arm64
+            cross: false
+
+          # ── macOS x86_64 (Intel) ────────────────────────────────────────────
+          - name: macos-x86_64
+            os: macos-13
+            target: x86_64-apple-darwin
+            artifact_suffix: macos-x86_64
+            cross: false
+
+          # ── Windows x86_64 ──────────────────────────────────────────────────
+          - name: windows-x86_64
+            os: windows-latest
+            target: x86_64-pc-windows-msvc
+            artifact_suffix: windows-x86_64
+            cross: false
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # ── Rust toolchain ───────────────────────────────────────────────────────
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Cache Cargo
+        uses: Swatinem/rust-cache@v2
+        with:
+          key: ${{ matrix.name }}
+
+      # ── System dependencies ──────────────────────────────────────────────────
+      - name: Install system dependencies (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y --no-install-recommends \
+            libssl-dev pkg-config dpkg-dev fakeroot
+
+      # ── Build ────────────────────────────────────────────────────────────────
+      - name: Build release binary
+        run: cargo build --release --locked --bin alloy --target ${{ matrix.target }}
+
+      # ── Extract version ──────────────────────────────────────────────────────
+      - name: Extract version
+        id: version
+        shell: bash
+        run: echo "VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+
+      # ============================================================
+      # LINUX ARTIFACTS
+      # ============================================================
+      - name: Package Linux tar.gz
+        if: runner.os == 'Linux'
+        run: |
+          VERSION=${{ steps.version.outputs.VERSION }}
+          STAGING="alloy-studio-${VERSION}-${{ matrix.artifact_suffix }}"
+          mkdir -p "$STAGING"
+          cp target/${{ matrix.target }}/release/alloy "$STAGING/"
+          cp README.md LICENSE "$STAGING/" 2>/dev/null || true
+          tar -czf "${STAGING}.tar.gz" "$STAGING"
+          echo "TARBALL=${STAGING}.tar.gz" >> "$GITHUB_ENV"
+          echo "STAGING_DIR=$STAGING"      >> "$GITHUB_ENV"
+          echo "VERSION=$VERSION"          >> "$GITHUB_ENV"
+
+      - name: Build .deb package (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          STAGING="$STAGING_DIR"
+          DEB_ROOT="deb-root"
+          DEB_NAME="alloy-studio_${VERSION}_amd64"
+
+          mkdir -p "${DEB_ROOT}/DEBIAN"
+          mkdir -p "${DEB_ROOT}/usr/bin"
+          mkdir -p "${DEB_ROOT}/usr/share/doc/alloy-studio"
+
+          # Binary
+          cp "target/${{ matrix.target }}/release/alloy" "${DEB_ROOT}/usr/bin/alloy"
+          chmod 0755 "${DEB_ROOT}/usr/bin/alloy"
+
+          # Copyright / README
+          cp LICENSE "${DEB_ROOT}/usr/share/doc/alloy-studio/copyright" 2>/dev/null || \
+            echo "Copyright Alloy Studio Contributors. Apache-2.0." \
+              > "${DEB_ROOT}/usr/share/doc/alloy-studio/copyright"
+
+          # DEBIAN/control
+          cat > "${DEB_ROOT}/DEBIAN/control" <<EOF
+          Package: alloy-studio
+          Version: ${VERSION}
+          Architecture: amd64
+          Maintainer: Alloy Studio Contributors <noreply@alloystudio.dev>
+          Description: GPU-accelerated FTC robotics code editor
+           Alloy Studio is an AI-native code editor purpose-built for
+           FIRST Tech Challenge robotics teams.
+          EOF
+
+          # Strip leading whitespace that heredoc indentation adds
+          sed -i 's/^          //' "${DEB_ROOT}/DEBIAN/control"
+
+          dpkg-deb --build "$DEB_ROOT" "${DEB_NAME}.deb"
+          echo "DEB_PKG=${DEB_NAME}.deb" >> "$GITHUB_ENV"
+
+      - name: Build AppImage (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          VERSION="$VERSION"
+          APP_DIR="AlloyStudio.AppDir"
+          APPIMAGE_NAME="alloy-studio-${VERSION}-x86_64.AppImage"
+
+          # Download appimagetool
+          curl -sSL -o appimagetool \
+            "https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage"
+          chmod +x appimagetool
+
+          mkdir -p "${APP_DIR}/usr/bin"
+          mkdir -p "${APP_DIR}/usr/share/applications"
+          mkdir -p "${APP_DIR}/usr/share/icons/hicolor/256x256/apps"
+
+          # Binary
+          cp "target/${{ matrix.target }}/release/alloy" "${APP_DIR}/usr/bin/alloy"
+
+          # Desktop entry
+          cat > "${APP_DIR}/alloy-studio.desktop" <<'DESKTOP'
+          [Desktop Entry]
+          Name=Alloy Studio
+          Exec=alloy
+          Icon=alloy-studio
+          Type=Application
+          Categories=Development;IDE;
+          Comment=FTC robotics code editor
+          DESKTOP
+          sed -i 's/^          //' "${APP_DIR}/alloy-studio.desktop"
+          cp "${APP_DIR}/alloy-studio.desktop" \
+            "${APP_DIR}/usr/share/applications/alloy-studio.desktop"
+
+          # Placeholder icon (1x1 white PNG)
+          printf '\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01\x08\x02\x00\x00\x00\x90wS\xde\x00\x00\x00\x0cIDATx\x9cc\xf8\xff\xff?\x00\x05\xfe\x02\xfe\xdc\xccY\xe7\x00\x00\x00\x00IEND\xaeB`\x82' \
+            > "${APP_DIR}/alloy-studio.png"
+          cp "${APP_DIR}/alloy-studio.png" \
+            "${APP_DIR}/usr/share/icons/hicolor/256x256/apps/alloy-studio.png"
+
+          # AppRun entry point
+          cat > "${APP_DIR}/AppRun" <<'APPRUN'
+          #!/bin/sh
+          exec "$(dirname "$0")/usr/bin/alloy" "$@"
+          APPRUN
+          chmod +x "${APP_DIR}/AppRun"
+
+          ARCH=x86_64 ./appimagetool "${APP_DIR}" "${APPIMAGE_NAME}" || true
+          echo "APPIMAGE=${APPIMAGE_NAME}" >> "$GITHUB_ENV"
+
+      # ============================================================
+      # MACOS ARTIFACTS
+      # ============================================================
+      - name: Package macOS tar.gz
+        if: runner.os == 'macOS'
+        run: |
+          VERSION="${{ steps.version.outputs.VERSION }}"
+          STAGING="alloy-studio-${VERSION}-${{ matrix.artifact_suffix }}"
+          mkdir -p "$STAGING"
+          cp target/${{ matrix.target }}/release/alloy "$STAGING/"
+          cp README.md LICENSE "$STAGING/" 2>/dev/null || true
+          tar -czf "${STAGING}.tar.gz" "$STAGING"
+          echo "TARBALL=${STAGING}.tar.gz" >> "$GITHUB_ENV"
+          echo "VERSION=$VERSION"          >> "$GITHUB_ENV"
+
+      - name: Build macOS .dmg
+        if: runner.os == 'macOS'
+        run: |
+          VERSION="${VERSION}"
+          APP_BUNDLE="AlloyStudio.app"
+          DMG_NAME="alloy-studio-${VERSION}-${{ matrix.artifact_suffix }}.dmg"
+          DMG_STAGING="dmg-staging"
+
+          # Create .app bundle structure
+          mkdir -p "${APP_BUNDLE}/Contents/MacOS"
+          mkdir -p "${APP_BUNDLE}/Contents/Resources"
+
+          cp "target/${{ matrix.target }}/release/alloy" \
+            "${APP_BUNDLE}/Contents/MacOS/alloy"
+          chmod +x "${APP_BUNDLE}/Contents/MacOS/alloy"
+
+          cat > "${APP_BUNDLE}/Contents/Info.plist" <<'PLIST'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+            "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>CFBundleName</key>
+            <string>Alloy Studio</string>
+            <key>CFBundleDisplayName</key>
+            <string>Alloy Studio</string>
+            <key>CFBundleIdentifier</key>
+            <string>dev.alloystudio.alloy</string>
+            <key>CFBundleVersion</key>
+            <string>VERSION_PLACEHOLDER</string>
+            <key>CFBundleShortVersionString</key>
+            <string>VERSION_PLACEHOLDER</string>
+            <key>CFBundleExecutable</key>
+            <string>alloy</string>
+            <key>CFBundlePackageType</key>
+            <string>APPL</string>
+            <key>LSMinimumSystemVersion</key>
+            <string>12.0</string>
+            <key>NSHighResolutionCapable</key>
+            <true/>
+          </dict>
+          </plist>
+          PLIST
+          sed -i '' "s/VERSION_PLACEHOLDER/${VERSION}/g" \
+            "${APP_BUNDLE}/Contents/Info.plist"
+
+          # Create DMG staging directory with symlink to /Applications
+          mkdir -p "$DMG_STAGING"
+          cp -R "$APP_BUNDLE" "$DMG_STAGING/"
+          ln -s /Applications "$DMG_STAGING/Applications"
+
+          hdiutil create \
+            -volname "Alloy Studio ${VERSION}" \
+            -srcfolder "$DMG_STAGING" \
+            -ov \
+            -format UDZO \
+            "$DMG_NAME"
+
+          echo "DMG=${DMG_NAME}" >> "$GITHUB_ENV"
+
+      # ============================================================
+      # WINDOWS ARTIFACTS
+      # ============================================================
+      - name: Package Windows .zip
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $version = "${{ steps.version.outputs.VERSION }}"
+          $staging = "alloy-studio-$version-${{ matrix.artifact_suffix }}"
+          New-Item -ItemType Directory -Path $staging | Out-Null
+          Copy-Item "target\${{ matrix.target }}\release\alloy.exe" "$staging\"
+          if (Test-Path "README.md") { Copy-Item "README.md" "$staging\" }
+          if (Test-Path "LICENSE")   { Copy-Item "LICENSE"   "$staging\" }
+          Compress-Archive -Path "$staging\*" -DestinationPath "$staging.zip"
+          "ZIP=$staging.zip" | Out-File -FilePath $env:GITHUB_ENV -Append
+
+      # ============================================================
+      # UPLOAD ARTIFACTS → GitHub Release
+      # ============================================================
+      - name: Upload Linux artifacts
+        if: runner.os == 'Linux'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            ${{ env.TARBALL }}
+            ${{ env.DEB_PKG }}
+            ${{ env.APPIMAGE }}
+
+      - name: Upload macOS artifacts
+        if: runner.os == 'macOS'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            ${{ env.TARBALL }}
+            ${{ env.DMG }}
+
+      - name: Upload Windows artifacts
+        if: runner.os == 'Windows'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            ${{ env.ZIP }}

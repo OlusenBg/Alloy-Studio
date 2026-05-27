@@ -1,6 +1,30 @@
 [package]
 name        = "alloy-app"
+description = "Alloy Studio binary entry point: CLI, runtime init, subsystem wiring, graceful shutdown"
 publish     = false
 version.workspace = true
 edition.workspace = true
 license.workspace = true
+
+[[bin]]
+name = "alloy"
+path = "src/main.rs"
+
+[dependencies]
+alloy-rpc       = { path = "../alloy-rpc" }
+alloy-core      = { path = "../alloy-core" }
+alloy-lsp       = { path = "../alloy-lsp" }
+alloy-git       = { path = "../alloy-git" }
+alloy-gradle    = { path = "../alloy-gradle" }
+alloy-telemetry = { path = "../alloy-telemetry" }
+alloy-proxy     = { path = "../alloy-proxy" }
+tokio           = { workspace = true }
+futures         = { workspace = true }
+serde           = { workspace = true }
+serde_json      = { workspace = true }
+anyhow          = { workspace = true }
+tracing         = { workspace = true }
+tracing-subscriber = { workspace = true }
+clap            = { workspace = true }
+dirs            = { workspace = true }
+parking_lot     = { workspace = true }

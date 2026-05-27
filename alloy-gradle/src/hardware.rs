@@ -36,7 +36,7 @@ fn shorthand_to_type(shorthand: &str) -> &'static str {
         "touchSensor"     => "TouchSensor",
         "distanceSensor"  => "DistanceSensor",
         "imu"             => "IMU",
-        other             => other,
+        _other            => "Unknown",
     }
 }
 

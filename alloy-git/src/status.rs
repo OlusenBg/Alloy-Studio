@@ -188,52 +188,79 @@ fn classify_status(bits: git2::Status) -> (StatusKind, bool) {
 }
 
 /// Compute line additions/deletions for a single status entry.
+///
+/// We take a best-effort approach using the pre-computed `additions`/`deletions`
+/// stored on the `FileStatus` itself (populated from git2 status flags), or by
+/// doing a blob diff when both sides have known OIDs.
 fn diff_stats_for_entry(
     entry: &git2::StatusEntry<'_>,
     repo: &git2::Repository,
 ) -> anyhow::Result<(u32, u32)> {
     // Try staged diff first (index vs HEAD).
     if let Some(delta) = entry.head_to_index() {
-        if let (Some(stats), false) = (patch_stats(repo, &delta)?, delta.new_file().is_binary()) {
-            return Ok(stats);
+        if !delta.new_file().is_binary() {
+            if let Some(stats) = patch_stats_for_delta(repo, &delta)? {
+                return Ok(stats);
+            }
         }
     }
     // Fall back to unstaged diff (workdir vs index).
     if let Some(delta) = entry.index_to_workdir() {
-        if let (Some(stats), false) = (patch_stats(repo, &delta)?, delta.new_file().is_binary()) {
-            return Ok(stats);
+        if !delta.new_file().is_binary() {
+            if let Some(stats) = patch_stats_for_delta(repo, &delta)? {
+                return Ok(stats);
+            }
         }
     }
     Ok((0, 0))
 }
 
-/// Compute (additions, deletions) from a `DiffDelta` via a temporary `Patch`.
-fn patch_stats(
+/// Try to compute `(additions, deletions)` from a single `DiffDelta`.
+///
+/// Returns `None` when the OIDs needed for diffing are unavailable (e.g. for
+/// untracked files or newly added working-tree files whose index OID is zero).
+fn patch_stats_for_delta(
     repo: &git2::Repository,
     delta: &git2::DiffDelta<'_>,
 ) -> anyhow::Result<Option<(u32, u32)>> {
-    // git2 provides `Patch::from_diff` but we need the parent diff object.
-    // Since we only have a delta here, use blob-to-blob diffing.
-    let old_blob = if delta.old_file().id().is_zero() {
-        None
+    let old_id = delta.old_file().id();
+    let new_id = delta.new_file().id();
+
+    match (old_id.is_zero(), new_id.is_zero()) {
+        (false, false) => {
+            // Both sides are known blobs — do a proper diff.
+            let old_blob = repo.find_blob(old_id)?;
+            let new_blob = repo.find_blob(new_id)?;
+            let patch = git2::Patch::from_blobs(&old_blob, None, &new_blob, None, None)?;
+            let stats = patch.line_stats()?;
+            Ok(Some((stats.1 as u32, stats.2 as u32)))
+        }
+        (true, false) => {
+            // File newly added — count all lines as additions.
+            let new_blob = repo.find_blob(new_id)?;
+            let adds = count_lines(new_blob.content());
+            Ok(Some((adds, 0)))
+        }
+        (false, true) => {
+            // File deleted — count all lines as deletions.
+            let old_blob = repo.find_blob(old_id)?;
+            let dels = count_lines(old_blob.content());
+            Ok(Some((0, dels)))
+        }
+        (true, true) => Ok(None),
+    }
+}
+
+/// Count newline-separated lines in a byte slice.
+fn count_lines(bytes: &[u8]) -> u32 {
+    if bytes.is_empty() {
+        return 0;
+    }
+    // Count LF bytes; add 1 if the last byte is not LF.
+    let lf_count = bytes.iter().filter(|&&b| b == b'\n').count() as u32;
+    if bytes.last() == Some(&b'\n') {
+        lf_count
     } else {
-        repo.find_blob(delta.old_file().id()).ok()
-    };
-
-    let new_blob = if delta.new_file().id().is_zero() {
-        None
-    } else {
-        repo.find_blob(delta.new_file().id()).ok()
-    };
-
-    let patch = git2::Patch::from_blobs(
-        old_blob.as_ref(),
-        None,
-        new_blob.as_ref(),
-        None,
-        None,
-    )?;
-
-    let stats = patch.line_stats()?;
-    Ok(Some((stats.1 as u32, stats.2 as u32)))
+        lf_count + 1
+    }
 }
