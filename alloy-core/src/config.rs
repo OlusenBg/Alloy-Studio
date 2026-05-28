@@ -10,9 +10,10 @@ use std::sync::Arc;
 // ---------------------------------------------------------------------------
 
 /// The line-ending convention used when writing files.
-#[derive(serde::Serialize, serde::Deserialize, Clone, Debug, PartialEq, Eq)]
+#[derive(serde::Serialize, serde::Deserialize, Clone, Debug, PartialEq, Eq, Default)]
 pub enum LineEnding {
     /// Unix-style LF (`\n`).
+    #[default]
     Lf,
     /// Windows-style CRLF (`\r\n`).
     CrLf,
@@ -28,12 +29,6 @@ impl LineEnding {
             LineEnding::CrLf => "\r\n",
             LineEnding::Cr => "\r",
         }
-    }
-}
-
-impl Default for LineEnding {
-    fn default() -> Self {
-        LineEnding::Lf
     }
 }
 
@@ -124,21 +119,11 @@ impl Default for GitConfig {
 // ---------------------------------------------------------------------------
 
 /// Top-level configuration for Alloy Studio, serialised as TOML.
-#[derive(serde::Serialize, serde::Deserialize, Clone, Debug)]
+#[derive(serde::Serialize, serde::Deserialize, Clone, Debug, Default)]
 pub struct AlloyConfig {
     pub editor: EditorConfig,
     pub ftc: FtcConfig,
     pub git: GitConfig,
-}
-
-impl Default for AlloyConfig {
-    fn default() -> Self {
-        Self {
-            editor: EditorConfig::default(),
-            ftc: FtcConfig::default(),
-            git: GitConfig::default(),
-        }
-    }
 }
 
 impl AlloyConfig {
@@ -160,8 +145,7 @@ impl AlloyConfig {
         if let Some(parent) = path.parent() {
             std::fs::create_dir_all(parent)?;
         }
-        let text = toml::to_string_pretty(self)
-            .context("serialising AlloyConfig to TOML")?;
+        let text = toml::to_string_pretty(self).context("serialising AlloyConfig to TOML")?;
         std::fs::write(path, text.as_bytes())
             .with_context(|| format!("writing config to {}", path.display()))?;
         Ok(())
@@ -208,9 +192,7 @@ impl ConfigWatcher {
     /// If the file does not yet exist the default config is used.  Returns
     /// `(watcher, receiver)` — the caller can poll the receiver to learn about
     /// config changes.
-    pub fn new(
-        path: PathBuf,
-    ) -> anyhow::Result<(Self, crossbeam_channel::Receiver<AlloyConfig>)> {
+    pub fn new(path: PathBuf) -> anyhow::Result<(Self, crossbeam_channel::Receiver<AlloyConfig>)> {
         // Load initial config (or use default).
         let initial = AlloyConfig::load(&path).unwrap_or_default();
         let config = Arc::new(parking_lot::RwLock::new(initial));
@@ -222,36 +204,31 @@ impl ConfigWatcher {
         let tx_clone = change_tx.clone();
         let path_clone = path.clone();
 
-        let mut watcher = notify::recommended_watcher(
-            move |res: notify::Result<Event>| {
-                let event = match res {
-                    Ok(e) => e,
-                    Err(err) => {
-                        tracing::warn!("config watcher error: {err}");
-                        return;
-                    }
-                };
-
-                // Only react to file-modification events.
-                let is_modify = matches!(
-                    event.kind,
-                    EventKind::Modify(_) | EventKind::Create(_)
-                );
-                if !is_modify {
+        let mut watcher = notify::recommended_watcher(move |res: notify::Result<Event>| {
+            let event = match res {
+                Ok(e) => e,
+                Err(err) => {
+                    tracing::warn!("config watcher error: {err}");
                     return;
                 }
+            };
 
-                match AlloyConfig::load(&path_clone) {
-                    Ok(new_cfg) => {
-                        *config_clone.write() = new_cfg.clone();
-                        let _ = tx_clone.send(new_cfg);
-                    }
-                    Err(err) => {
-                        tracing::warn!("failed to reload config: {err}");
-                    }
+            // Only react to file-modification events.
+            let is_modify = matches!(event.kind, EventKind::Modify(_) | EventKind::Create(_));
+            if !is_modify {
+                return;
+            }
+
+            match AlloyConfig::load(&path_clone) {
+                Ok(new_cfg) => {
+                    *config_clone.write() = new_cfg.clone();
+                    let _ = tx_clone.send(new_cfg);
                 }
-            },
-        )?;
+                Err(err) => {
+                    tracing::warn!("failed to reload config: {err}");
+                }
+            }
+        })?;
 
         // Watch the parent directory so we catch atomic writes (rename).
         let watch_path = path.parent().unwrap_or(Path::new("."));

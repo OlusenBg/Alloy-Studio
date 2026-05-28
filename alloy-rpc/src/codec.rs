@@ -48,9 +48,7 @@ impl Encoder<RpcMessage> for AlloyCodec {
     fn encode(&mut self, item: RpcMessage, dst: &mut BytesMut) -> Result<(), Self::Error> {
         let json = serde_json::to_string(&item)?;
         // Delegate to LinesCodec which appends the newline and reserves capacity.
-        self.0
-            .encode(json, dst)
-            .map_err(lines_codec_err_to_error)
+        self.0.encode(json, dst).map_err(lines_codec_err_to_error)
     }
 }
 
@@ -107,12 +105,10 @@ where
 
 fn lines_codec_err_to_error(e: LinesCodecError) -> Error {
     match e {
-        LinesCodecError::MaxLineLengthExceeded => {
-            Error::Io(std::io::Error::new(
-                std::io::ErrorKind::InvalidData,
-                "RPC frame exceeded maximum line length",
-            ))
-        }
+        LinesCodecError::MaxLineLengthExceeded => Error::Io(std::io::Error::new(
+            std::io::ErrorKind::InvalidData,
+            "RPC frame exceeded maximum line length",
+        )),
         LinesCodecError::Io(io_err) => Error::Io(io_err),
     }
 }

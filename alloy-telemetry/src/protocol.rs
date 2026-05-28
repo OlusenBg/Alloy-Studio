@@ -173,8 +173,10 @@ mod tests {
         let mut buf = BytesMut::new();
         codec.encode(packet, &mut buf).expect("encode failed");
 
-        let decoded = codec.decode(&mut buf).expect("decode error").expect("no packet");
-        decoded
+        codec
+            .decode(&mut buf)
+            .expect("decode error")
+            .expect("no packet")
     }
 
     #[test]
@@ -252,9 +254,9 @@ mod tests {
         // Truncate to partial data
         let partial = buf.split_to(buf.len() - 3);
         let mut partial = partial; // make mutable
-        // This should need more data, not error
-        // We need a new partial buffer that is missing the last 3 bytes
-        // but has the full length header
+                                   // This should need more data, not error
+                                   // We need a new partial buffer that is missing the last 3 bytes
+                                   // but has the full length header
         let result = codec.decode(&mut partial);
         assert!(result.unwrap().is_none());
     }
@@ -265,7 +267,7 @@ mod tests {
         let mut buf = BytesMut::new();
         // Write a length that exceeds MAX_PACKET_BYTES
         buf.put_u32(MAX_PACKET_BYTES + 1);
-        buf.put_slice(&vec![0u8; 100]); // dummy payload (won't be read)
+        buf.put_slice(&[0u8; 100]); // dummy payload (won't be read)
         let result = codec.decode(&mut buf);
         assert!(matches!(result, Err(TelemetryError::InvalidLength(_))));
     }

@@ -94,8 +94,11 @@ pub fn supports_completion(caps: &ServerCapabilities) -> bool {
 
 /// Returns `true` if the server advertises hover support.
 pub fn supports_hover(caps: &ServerCapabilities) -> bool {
-    matches!(caps.hover_provider, Some(lsp_types::HoverProviderCapability::Simple(true))
-        | Some(lsp_types::HoverProviderCapability::Options(_)))
+    matches!(
+        caps.hover_provider,
+        Some(lsp_types::HoverProviderCapability::Simple(true))
+            | Some(lsp_types::HoverProviderCapability::Options(_))
+    )
 }
 
 /// Returns `true` if the server advertises go-to-definition support.

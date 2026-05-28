@@ -65,11 +65,8 @@ impl ConflictFile {
     /// Return the file content with every conflict resolved by taking our side.
     pub fn resolve_take_ours(&self) -> String {
         let text = std::fs::read_to_string(&self.path).unwrap_or_default();
-        let choices: Vec<ResolutionChoice> = self
-            .hunks
-            .iter()
-            .map(|_| ResolutionChoice::Ours)
-            .collect();
+        let choices: Vec<ResolutionChoice> =
+            self.hunks.iter().map(|_| ResolutionChoice::Ours).collect();
         apply_resolutions(&text, &self.hunks, &choices)
     }
 
@@ -158,7 +155,11 @@ fn parse_conflict_markers(text: &str) -> anyhow::Result<Vec<ConflictHunk>> {
             if let Some(rest) = line.strip_prefix(">>>>>>>") {
                 let theirs_label = {
                     let l = rest.trim().to_string();
-                    if l.is_empty() { "theirs".to_string() } else { l }
+                    if l.is_empty() {
+                        "theirs".to_string()
+                    } else {
+                        l
+                    }
                 };
 
                 hunks.push(ConflictHunk {
@@ -187,11 +188,7 @@ fn parse_conflict_markers(text: &str) -> anyhow::Result<Vec<ConflictHunk>> {
 }
 
 /// Apply `choices` to `text`, replacing each conflict block with the chosen content.
-fn apply_resolutions(
-    text: &str,
-    hunks: &[ConflictHunk],
-    choices: &[ResolutionChoice],
-) -> String {
+fn apply_resolutions(text: &str, hunks: &[ConflictHunk], choices: &[ResolutionChoice]) -> String {
     // Build a line-index map: line_no (1-based) → line content.
     let lines: Vec<&str> = text.lines().collect();
     let total = lines.len() as u32;

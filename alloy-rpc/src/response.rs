@@ -3,8 +3,8 @@
 use serde::{Deserialize, Serialize};
 
 use crate::types::{
-    CompletionItem, Diagnostic, DirEntry, FileStat, FileEvent, Location, LogLevel,
-    SymbolInformation, TelemetryEvent, BuildEvent,
+    BuildEvent, CompletionItem, Diagnostic, DirEntry, FileEvent, FileStat, Location, LogLevel,
+    SymbolInformation, TelemetryEvent,
 };
 
 // ---------------------------------------------------------------------------
@@ -21,7 +21,6 @@ use crate::types::{
 #[serde(tag = "method", content = "params", rename_all = "snake_case")]
 pub enum Response {
     // --- Generic outcomes ----------------------------------------------------
-
     /// Generic success response carrying no payload.
     Ok,
 
@@ -29,7 +28,6 @@ pub enum Response {
     Error { message: String, code: i32 },
 
     // --- Document lifecycle --------------------------------------------------
-
     /// Confirmation that a document was opened.
     OpenDocument,
 
@@ -43,7 +41,6 @@ pub enum Response {
     SaveDocument,
 
     // --- Language features ---------------------------------------------------
-
     /// Completion items at the requested position.
     GetCompletion { items: Vec<CompletionItem> },
 
@@ -66,7 +63,6 @@ pub enum Response {
     GetDiagnostics { diagnostics: Vec<Diagnostic> },
 
     // --- Filesystem ----------------------------------------------------------
-
     /// Raw byte content of a file.
     ReadFile { content: Vec<u8> },
 
@@ -86,7 +82,6 @@ pub enum Response {
     CreateDir,
 
     // --- Search --------------------------------------------------------------
-
     /// Matches found in a single buffer.
     SearchInBuffer { matches: Vec<serde_json::Value> },
 
@@ -94,7 +89,6 @@ pub enum Response {
     SearchWorkspace { matches: Vec<serde_json::Value> },
 
     // --- Build ---------------------------------------------------------------
-
     /// Build started; build events will arrive as `BuildOutput` notifications.
     StartBuild,
 
@@ -108,7 +102,6 @@ pub enum Response {
     ApplyRepair,
 
     // --- Git -----------------------------------------------------------------
-
     /// Working-tree status entries.
     GitStatus { files: Vec<serde_json::Value> },
 
@@ -140,7 +133,6 @@ pub enum Response {
     GenerateCommitMessage { message: String },
 
     // --- FTC-specific --------------------------------------------------------
-
     /// OpMode class descriptors found in the project.
     ScanOpModes { opmodes: Vec<serde_json::Value> },
 
@@ -151,7 +143,6 @@ pub enum Response {
     GenerateHardwareDeclarations { declarations: String },
 
     // --- Telemetry -----------------------------------------------------------
-
     /// Confirmation that telemetry subscription was registered.
     SubscribeTelemetry,
 
@@ -162,7 +153,6 @@ pub enum Response {
     GetTelemetryHistory { records: Vec<serde_json::Value> },
 
     // --- File watch ----------------------------------------------------------
-
     /// Confirmation that a path is now being watched.
     WatchPath,
 
@@ -170,7 +160,6 @@ pub enum Response {
     UnwatchPath,
 
     // --- Workspace -----------------------------------------------------------
-
     /// Confirmation that the workspace was opened.
     OpenWorkspace,
 

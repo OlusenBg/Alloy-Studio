@@ -33,9 +33,7 @@ impl App {
     /// Initialise all subsystems from the parsed CLI arguments.
     pub async fn new(args: Cli) -> anyhow::Result<Self> {
         // 1. Load config (from args.config or default path).
-        let config_path = args
-            .config
-            .unwrap_or_else(AlloyConfig::default_config_path);
+        let config_path = args.config.unwrap_or_else(AlloyConfig::default_config_path);
 
         let config = Arc::new(RwLock::new(
             AlloyConfig::load(&config_path).unwrap_or_else(|_| AlloyConfig::default()),
@@ -46,17 +44,13 @@ impl App {
             .path
             .map(|p| {
                 if p.is_file() {
-                    p.parent()
-                        .map(|parent| parent.to_path_buf())
-                        .unwrap_or(p)
+                    p.parent().map(|parent| parent.to_path_buf()).unwrap_or(p)
                 } else {
                     p
                 }
             })
             .map(|p| Workspace::detect_root(&p))
-            .unwrap_or_else(|| {
-                std::env::current_dir().unwrap_or_else(|_| PathBuf::from("."))
-            });
+            .unwrap_or_else(|| std::env::current_dir().unwrap_or_else(|_| PathBuf::from(".")));
 
         let workspace = Arc::new(Workspace::new(workspace_root.clone()));
 
@@ -90,10 +84,7 @@ impl App {
 
     /// Start all subsystems and run until a shutdown signal is received.
     pub async fn run(self) -> anyhow::Result<()> {
-        tracing::info!(
-            version = env!("CARGO_PKG_VERSION"),
-            "Alloy Studio starting"
-        );
+        tracing::info!(version = env!("CARGO_PKG_VERSION"), "Alloy Studio starting");
 
         // Destructure to avoid partial-move issues when moving into async tasks.
         let Self {
@@ -121,8 +112,7 @@ impl App {
                 #[cfg(not(unix))]
                 let _ = ipc_socket; // unused on non-Unix
 
-                let addr: std::net::SocketAddr =
-                    format!("127.0.0.1:{ipc_port}").parse().unwrap();
+                let addr: std::net::SocketAddr = format!("127.0.0.1:{ipc_port}").parse().unwrap();
                 if let Err(e) = proxy.listen_tcp(addr).await {
                     tracing::error!(error = %e, "Proxy TCP server error");
                 }
@@ -136,11 +126,7 @@ impl App {
             }
         });
 
-        tracing::info!(
-            ipc_port,
-            telemetry_port,
-            "All subsystems started"
-        );
+        tracing::info!(ipc_port, telemetry_port, "All subsystems started");
 
         // ── Wait for shutdown ─────────────────────────────────────────────────
         crate::signal::ShutdownSignal::wait_for_shutdown().await;

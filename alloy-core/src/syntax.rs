@@ -51,11 +51,9 @@ impl SyntaxLayer {
 
     /// Parse the full document text (discards any prior tree).
     pub fn parse_full(&mut self, text: &str) -> anyhow::Result<()> {
-        self.tree = Some(
-            self.parser
-                .parse(text.as_bytes(), None)
-                .ok_or_else(|| anyhow::anyhow!("tree-sitter parse_full failed for '{}'", self.language_id))?,
-        );
+        self.tree = Some(self.parser.parse(text.as_bytes(), None).ok_or_else(|| {
+            anyhow::anyhow!("tree-sitter parse_full failed for '{}'", self.language_id)
+        })?);
         Ok(())
     }
 

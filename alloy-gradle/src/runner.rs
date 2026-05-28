@@ -102,11 +102,7 @@ impl GradleRunner {
         args.push("--console=plain".into());
 
         let gradlew = project.gradlew_path();
-        info!(
-            "Running: {} {}",
-            gradlew.display(),
-            args.join(" ")
-        );
+        info!("Running: {} {}", gradlew.display(), args.join(" "));
 
         let mut child = tokio::process::Command::new(gradlew)
             .args(&args)

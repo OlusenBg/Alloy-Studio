@@ -3,13 +3,11 @@ use std::path::{Path, PathBuf};
 use once_cell::sync::Lazy;
 use regex::Regex;
 
-static SDK_VERSION_RE: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r"ftc-sdk:([0-9]+\.[0-9]+(?:\.[0-9]+)?)").unwrap()
-});
+static SDK_VERSION_RE: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"ftc-sdk:([0-9]+\.[0-9]+(?:\.[0-9]+)?)").unwrap());
 
-static FTC_MARKER_RE: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r"(?:com\.qualcomm\.robotcore|FtcRobotController|TeamCode)").unwrap()
-});
+static FTC_MARKER_RE: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"(?:com\.qualcomm\.robotcore|FtcRobotController|TeamCode)").unwrap());
 
 /// A detected FTC project rooted at a directory containing gradlew.
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
@@ -96,7 +94,11 @@ impl FtcProject {
 
         let local_properties = {
             let p = root.join("local.properties");
-            if p.exists() { Some(p) } else { None }
+            if p.exists() {
+                Some(p)
+            } else {
+                None
+            }
         };
 
         Ok(Self {
@@ -166,7 +168,7 @@ impl FtcProject {
             if let Ok(meta) = std::fs::metadata(&self.gradlew) {
                 return meta.permissions().mode() & 0o111 != 0;
             }
-            return false;
+            false
         }
         #[cfg(not(unix))]
         true

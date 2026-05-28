@@ -28,7 +28,13 @@ impl TelemetryServer {
         let stream = Arc::new(TelemetryStream::new());
         let addr = listener.local_addr()?;
         info!("TelemetryServer listening on {}", addr);
-        Ok((Self { listener, stream: Arc::clone(&stream) }, stream))
+        Ok((
+            Self {
+                listener,
+                stream: Arc::clone(&stream),
+            },
+            stream,
+        ))
     }
 
     /// Return the local address this server is bound to.
@@ -144,14 +150,11 @@ mod tests {
         client.send(Packet::ping(99)).await.unwrap();
 
         // Expect a pong back
-        let response = tokio::time::timeout(
-            tokio::time::Duration::from_millis(200),
-            client.next(),
-        )
-        .await
-        .expect("timed out waiting for pong")
-        .expect("stream ended")
-        .expect("decode error");
+        let response = tokio::time::timeout(tokio::time::Duration::from_millis(200), client.next())
+            .await
+            .expect("timed out waiting for pong")
+            .expect("stream ended")
+            .expect("decode error");
 
         match response.kind {
             PacketKind::Pong { seq } => assert_eq!(seq, 99),

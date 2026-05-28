@@ -7,17 +7,11 @@ use std::path::Path;
 // ── Regex patterns ────────────────────────────────────────────────────────────
 
 static HARDWARE_MAP_GET: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(
-        r#"hardwareMap\.get\(\s*(\w+(?:\.\w+)*?)\.class\s*,\s*"([^"]+)"\s*\)"#,
-    )
-    .unwrap()
+    Regex::new(r#"hardwareMap\.get\(\s*(\w+(?:\.\w+)*?)\.class\s*,\s*"([^"]+)"\s*\)"#).unwrap()
 });
 
 static HARDWARE_MAP_TRY_GET: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(
-        r#"hardwareMap\.tryGet\(\s*(\w+(?:\.\w+)*?)\.class\s*,\s*"([^"]+)"\s*\)"#,
-    )
-    .unwrap()
+    Regex::new(r#"hardwareMap\.tryGet\(\s*(\w+(?:\.\w+)*?)\.class\s*,\s*"([^"]+)"\s*\)"#).unwrap()
 });
 
 static HARDWARE_MAP_SHORTHAND: Lazy<Regex> = Lazy::new(|| {
@@ -30,13 +24,13 @@ static HARDWARE_MAP_SHORTHAND: Lazy<Regex> = Lazy::new(|| {
 // Map shorthand names → proper Java type names
 fn shorthand_to_type(shorthand: &str) -> &'static str {
     match shorthand {
-        "dcMotor"         => "DcMotor",
-        "servo"           => "Servo",
-        "colorSensor"     => "ColorSensor",
-        "touchSensor"     => "TouchSensor",
-        "distanceSensor"  => "DistanceSensor",
-        "imu"             => "IMU",
-        _other            => "Unknown",
+        "dcMotor" => "DcMotor",
+        "servo" => "Servo",
+        "colorSensor" => "ColorSensor",
+        "touchSensor" => "TouchSensor",
+        "distanceSensor" => "DistanceSensor",
+        "imu" => "IMU",
+        _other => "Unknown",
     }
 }
 
@@ -230,20 +224,26 @@ mod tests {
     use tempfile::NamedTempFile;
 
     fn write_java(content: &str) -> NamedTempFile {
-        let mut f = tempfile::Builder::new()
-            .suffix(".java")
-            .tempfile()
-            .unwrap();
+        let mut f = tempfile::Builder::new().suffix(".java").tempfile().unwrap();
         f.write_all(content.as_bytes()).unwrap();
         f
     }
 
     #[test]
     fn camel_case_conversion() {
-        assert_eq!(HardwareConfig::config_name_to_var_name("left_drive"), "leftDrive");
-        assert_eq!(HardwareConfig::config_name_to_var_name("arm_servo"), "armServo");
+        assert_eq!(
+            HardwareConfig::config_name_to_var_name("left_drive"),
+            "leftDrive"
+        );
+        assert_eq!(
+            HardwareConfig::config_name_to_var_name("arm_servo"),
+            "armServo"
+        );
         assert_eq!(HardwareConfig::config_name_to_var_name("motor1"), "motor1");
-        assert_eq!(HardwareConfig::config_name_to_var_name("front_left_wheel"), "frontLeftWheel");
+        assert_eq!(
+            HardwareConfig::config_name_to_var_name("front_left_wheel"),
+            "frontLeftWheel"
+        );
     }
 
     #[test]
@@ -300,30 +300,28 @@ DcMotor m2 = hardwareMap.get(DcMotor.class, "motor_a");
 
     #[test]
     fn format_java_block() {
-        let config = HardwareConfig::from_port_assignments(&[
-            PortAssignment {
-                hub: 0,
-                port: 0,
-                device_type: "DcMotor".into(),
-                config_name: "left_drive".into(),
-                variable_name: "leftDrive".into(),
-            },
-        ]);
+        let config = HardwareConfig::from_port_assignments(&[PortAssignment {
+            hub: 0,
+            port: 0,
+            device_type: "DcMotor".into(),
+            config_name: "left_drive".into(),
+            variable_name: "leftDrive".into(),
+        }]);
         let block = config.format_java_block();
-        assert!(block.contains("DcMotor leftDrive = hardwareMap.get(DcMotor.class, \"left_drive\");"));
+        assert!(
+            block.contains("DcMotor leftDrive = hardwareMap.get(DcMotor.class, \"left_drive\");")
+        );
     }
 
     #[test]
     fn format_kotlin_block() {
-        let config = HardwareConfig::from_port_assignments(&[
-            PortAssignment {
-                hub: 0,
-                port: 0,
-                device_type: "Servo".into(),
-                config_name: "arm_servo".into(),
-                variable_name: "armServo".into(),
-            },
-        ]);
+        let config = HardwareConfig::from_port_assignments(&[PortAssignment {
+            hub: 0,
+            port: 0,
+            device_type: "Servo".into(),
+            config_name: "arm_servo".into(),
+            variable_name: "armServo".into(),
+        }]);
         let block = config.format_kotlin_block();
         assert!(block.contains("val armServo = hardwareMap.get(Servo::class.java, \"arm_servo\")"));
     }

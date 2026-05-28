@@ -32,10 +32,7 @@ impl GitBlame {
         let path = path.to_string();
         let lines = repo
             .with_repo(move |r| {
-                let blame = r.blame_file(
-                    std::path::Path::new(&path),
-                    None,
-                )?;
+                let blame = r.blame_file(std::path::Path::new(&path), None)?;
 
                 let mut lines: Vec<BlameLine> = Vec::new();
                 let mut current_line: u32 = 1;
@@ -47,15 +44,9 @@ impl GitBlame {
                     // Short hash (7 chars).
                     let commit_id = format!("{:.7}", oid);
 
-                    let author = sig
-                        .name()
-                        .unwrap_or("Unknown")
-                        .to_string();
+                    let author = sig.name().unwrap_or("Unknown").to_string();
 
-                    let email = sig
-                        .email()
-                        .unwrap_or("")
-                        .to_string();
+                    let email = sig.email().unwrap_or("").to_string();
 
                     let timestamp = sig.when().seconds();
 

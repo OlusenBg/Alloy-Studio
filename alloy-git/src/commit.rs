@@ -163,7 +163,8 @@ pub async fn commit(repo: &Repository, options: CommitOptions) -> anyhow::Result
 pub async fn fetch(repo: &Repository, remote: &str) -> anyhow::Result<()> {
     let remote = remote.to_string();
     repo.with_repo(move |r| {
-        let mut remote_obj = r.find_remote(&remote)
+        let mut remote_obj = r
+            .find_remote(&remote)
             .or_else(|_| r.remote_anonymous(&remote))
             .context("resolving remote")?;
 

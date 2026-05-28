@@ -1,7 +1,7 @@
 //! Ring-buffer history of recent numeric telemetry values, keyed by name.
 
-use std::collections::VecDeque;
 use dashmap::DashMap;
+use std::collections::VecDeque;
 
 /// Default capacity (number of records) per key in the history buffer.
 pub const DEFAULT_HISTORY_CAPACITY: usize = 500;

@@ -22,9 +22,9 @@ pub async fn read_file(path: &Path) -> anyhow::Result<Vec<u8>> {
 pub async fn write_file(path: &Path, content: &[u8]) -> anyhow::Result<()> {
     if let Some(parent) = path.parent() {
         if !parent.as_os_str().is_empty() {
-            tokio::fs::create_dir_all(parent).await.map_err(|e| {
-                anyhow::anyhow!("create_dir_all {}: {}", parent.display(), e)
-            })?;
+            tokio::fs::create_dir_all(parent)
+                .await
+                .map_err(|e| anyhow::anyhow!("create_dir_all {}: {}", parent.display(), e))?;
         }
     }
     tokio::fs::write(path, content)
@@ -68,12 +68,10 @@ pub async fn list_dir(path: &Path) -> anyhow::Result<Vec<DirEntry>> {
     }
 
     // Sort: directories first, then files; each group alphabetically by name.
-    entries.sort_by(|a, b| {
-        match (b.is_dir, a.is_dir) {
-            (true, false) => std::cmp::Ordering::Greater,
-            (false, true) => std::cmp::Ordering::Less,
-            _ => a.name.to_lowercase().cmp(&b.name.to_lowercase()),
-        }
+    entries.sort_by(|a, b| match (b.is_dir, a.is_dir) {
+        (true, false) => std::cmp::Ordering::Greater,
+        (false, true) => std::cmp::Ordering::Less,
+        _ => a.name.to_lowercase().cmp(&b.name.to_lowercase()),
     });
 
     Ok(entries)

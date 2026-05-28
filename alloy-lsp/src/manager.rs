@@ -51,10 +51,7 @@ impl LspManager {
     }
 
     /// Return the client for `language_id`, starting a new server if necessary.
-    pub async fn get_or_start(
-        &self,
-        language_id: &str,
-    ) -> anyhow::Result<Arc<Mutex<LspClient>>> {
+    pub async fn get_or_start(&self, language_id: &str) -> anyhow::Result<Arc<Mutex<LspClient>>> {
         // Fast path: server already running.
         if let Some(handle) = self.servers.get(language_id) {
             return Ok(Arc::clone(&handle.client));
@@ -62,9 +59,7 @@ impl LspManager {
 
         // Determine launch command.
         let (cmd, args) = Self::server_command(language_id)
-            .ok_or_else(|| {
-                crate::error::LspError::ServerNotFound(language_id.to_string())
-            })?;
+            .ok_or_else(|| crate::error::LspError::ServerNotFound(language_id.to_string()))?;
 
         info!("LSP: starting server for language '{language_id}': {cmd}");
 

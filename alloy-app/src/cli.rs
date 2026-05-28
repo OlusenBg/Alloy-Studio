@@ -5,7 +5,11 @@ use std::path::PathBuf;
 
 /// Command-line arguments for Alloy Studio.
 #[derive(Parser, Debug, Clone)]
-#[command(name = "alloy", about = "Alloy Studio — FTC robotics code editor", version)]
+#[command(
+    name = "alloy",
+    about = "Alloy Studio — FTC robotics code editor",
+    version
+)]
 pub struct Cli {
     /// Open a project directory or file
     #[arg(value_name = "PATH")]

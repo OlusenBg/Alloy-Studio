@@ -59,13 +59,15 @@ impl Workspace {
         let mut current = if start.is_dir() {
             start.to_path_buf()
         } else {
-            start.parent().map(|p| p.to_path_buf()).unwrap_or_else(|| start.to_path_buf())
+            start
+                .parent()
+                .map(|p| p.to_path_buf())
+                .unwrap_or_else(|| start.to_path_buf())
         };
 
         loop {
             // FTC project markers.
-            if current.join("build.gradle").exists()
-                || current.join("FtcRobotController").exists()
+            if current.join("build.gradle").exists() || current.join("FtcRobotController").exists()
             {
                 return current;
             }
@@ -135,13 +137,7 @@ impl Workspace {
     fn is_ignored(name: &str) -> bool {
         matches!(
             name,
-            ".git"
-                | "build"
-                | ".gradle"
-                | ".idea"
-                | ".DS_Store"
-                | "node_modules"
-                | "__pycache__"
+            ".git" | "build" | ".gradle" | ".idea" | ".DS_Store" | "node_modules" | "__pycache__"
         )
     }
 

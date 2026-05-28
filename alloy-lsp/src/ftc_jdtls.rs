@@ -67,13 +67,7 @@ impl FtcSdkLocator {
             v
         };
 
-        for candidate in candidates {
-            if candidate.exists() {
-                return Some(candidate);
-            }
-        }
-
-        None
+        candidates.into_iter().find(|c| c.exists())
     }
 
     /// Find FTC SDK JARs in `<project_root>/libs/` and any sub-directories.
@@ -192,8 +186,7 @@ impl FtcJdtlsConfig {
     /// Write Eclipse JDT core preferences into the project's `.settings/` directory.
     pub fn write_project_settings(&self, project_root: &Path) -> anyhow::Result<()> {
         let settings_dir = project_root.join(".settings");
-        std::fs::create_dir_all(&settings_dir)
-            .context("creating .settings directory")?;
+        std::fs::create_dir_all(&settings_dir).context("creating .settings directory")?;
 
         // org.eclipse.jdt.core.prefs — compiler compliance level for FTC (Java 8).
         let prefs = "\
@@ -222,12 +215,13 @@ org.eclipse.jdt.core.compiler.problem.forbiddenReference=warning\n\
                 entry.display()
             ));
         }
-        xml.push_str("  <classpathentry kind=\"con\" path=\"org.eclipse.jdt.launching.JRE_CONTAINER\"/>\n");
+        xml.push_str(
+            "  <classpathentry kind=\"con\" path=\"org.eclipse.jdt.launching.JRE_CONTAINER\"/>\n",
+        );
         xml.push_str("  <classpathentry kind=\"output\" path=\"bin\"/>\n</classpath>\n");
 
         let cp_path = project_root.join(".classpath");
-        std::fs::write(&cp_path, xml)
-            .with_context(|| format!("writing {}", cp_path.display()))?;
+        std::fs::write(&cp_path, xml).with_context(|| format!("writing {}", cp_path.display()))?;
 
         Ok(())
     }
@@ -386,15 +380,12 @@ org.eclipse.jdt.core.compiler.problem.forbiddenReference=warning\n\
         let plugins_dir = self.jdtls_home.join("plugins");
         let entries = std::fs::read_dir(&plugins_dir).ok()?;
 
-        entries
-            .filter_map(|e| e.ok())
-            .map(|e| e.path())
-            .find(|p| {
-                p.file_name()
-                    .and_then(|n| n.to_str())
-                    .map(|n| n.starts_with("org.eclipse.equinox.launcher_") && n.ends_with(".jar"))
-                    .unwrap_or(false)
-            })
+        entries.filter_map(|e| e.ok()).map(|e| e.path()).find(|p| {
+            p.file_name()
+                .and_then(|n| n.to_str())
+                .map(|n| n.starts_with("org.eclipse.equinox.launcher_") && n.ends_with(".jar"))
+                .unwrap_or(false)
+        })
     }
 
     fn find_config_dir(&self) -> Option<PathBuf> {

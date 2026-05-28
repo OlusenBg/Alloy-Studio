@@ -51,11 +51,7 @@ impl LspClient {
     /// * `cmd`  – executable name or absolute path
     /// * `args` – command-line arguments forwarded verbatim
     /// * `env`  – additional environment variables for the child process
-    pub async fn spawn(
-        cmd: &str,
-        args: &[&str],
-        env: &[(&str, &str)],
-    ) -> anyhow::Result<Self> {
+    pub async fn spawn(cmd: &str, args: &[&str], env: &[(&str, &str)]) -> anyhow::Result<Self> {
         let mut command = tokio::process::Command::new(cmd);
         command
             .args(args)
@@ -162,9 +158,7 @@ impl LspClient {
         root_uri: &str,
     ) -> anyhow::Result<lsp_types::ServerCapabilities> {
         use lsp_types::{
-            InitializeParams, InitializeResult,
-            notification::Initialized,
-            request::Initialize,
+            notification::Initialized, request::Initialize, InitializeParams, InitializeResult,
         };
         let parsed_uri: url::Url = root_uri
             .parse()
@@ -187,7 +181,10 @@ impl LspClient {
         };
 
         let result: InitializeResult = self
-            .request::<_, InitializeResult>(<Initialize as lsp_types::request::Request>::METHOD, params)
+            .request::<_, InitializeResult>(
+                <Initialize as lsp_types::request::Request>::METHOD,
+                params,
+            )
             .await?;
 
         let caps = result.capabilities;
@@ -230,23 +227,17 @@ impl LspClient {
             write_message(&mut stdin, &text).await?;
         }
 
-        let value = time::timeout(
-            std::time::Duration::from_secs(REQUEST_TIMEOUT_SECS),
-            rx,
-        )
-        .await
-        .map_err(|_| {
-            self.pending.remove(&id);
-            crate::error::LspError::Timeout
-        })?
-        .map_err(|_| crate::error::LspError::ChannelClosed)?;
+        let value = time::timeout(std::time::Duration::from_secs(REQUEST_TIMEOUT_SECS), rx)
+            .await
+            .map_err(|_| {
+                self.pending.remove(&id);
+                crate::error::LspError::Timeout
+            })?
+            .map_err(|_| crate::error::LspError::ChannelClosed)?;
 
         // Check if the server returned an error object.
         if let Some(true) = value.get("__lsp_error").and_then(|v| v.as_bool()) {
-            let code = value
-                .get("code")
-                .and_then(|v| v.as_i64())
-                .unwrap_or(-1) as i32;
+            let code = value.get("code").and_then(|v| v.as_i64()).unwrap_or(-1) as i32;
             let message = value
                 .get("message")
                 .and_then(|v| v.as_str())

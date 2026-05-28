@@ -37,6 +37,7 @@ impl Buffer {
     // --- Constructors -------------------------------------------------------
 
     /// Create a buffer from an in-memory string.
+    #[allow(clippy::should_implement_trait)]
     pub fn from_str(s: &str) -> Self {
         Self {
             rope: Rope::from_str(s),
@@ -61,8 +62,12 @@ impl Buffer {
     /// Removes the bytes `[byte_start, byte_end)` (i.e. `op.old_text`) and
     /// inserts `op.new_text` at the same position.
     pub fn apply_edit(&mut self, op: EditOp) {
-        let char_start = self.rope.byte_to_char(op.byte_start.min(self.rope.len_bytes()));
-        let char_end = self.rope.byte_to_char(op.byte_end.min(self.rope.len_bytes()));
+        let char_start = self
+            .rope
+            .byte_to_char(op.byte_start.min(self.rope.len_bytes()));
+        let char_end = self
+            .rope
+            .byte_to_char(op.byte_end.min(self.rope.len_bytes()));
 
         // Remove the old range (may be empty for pure insertions).
         if char_end > char_start {
@@ -194,6 +199,7 @@ impl Buffer {
     }
 
     /// Collect the entire buffer into a `String`.
+    #[allow(clippy::inherent_to_string)]
     pub fn to_string(&self) -> String {
         self.rope.to_string()
     }

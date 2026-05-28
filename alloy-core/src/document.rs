@@ -199,9 +199,21 @@ mod tests {
 
     #[test]
     fn test_language_id_for_path() {
-        assert_eq!(Document::language_id_for_path(Path::new("Foo.java")), "java");
-        assert_eq!(Document::language_id_for_path(Path::new("build.gradle")), "groovy");
-        assert_eq!(Document::language_id_for_path(Path::new("AndroidManifest.xml")), "xml");
-        assert_eq!(Document::language_id_for_path(Path::new("config.txt")), "plaintext");
+        assert_eq!(
+            Document::language_id_for_path(Path::new("Foo.java")),
+            "java"
+        );
+        assert_eq!(
+            Document::language_id_for_path(Path::new("build.gradle")),
+            "groovy"
+        );
+        assert_eq!(
+            Document::language_id_for_path(Path::new("AndroidManifest.xml")),
+            "xml"
+        );
+        assert_eq!(
+            Document::language_id_for_path(Path::new("config.txt")),
+            "plaintext"
+        );
     }
 }

@@ -4,29 +4,20 @@ use regex::Regex;
 
 // ── Regex patterns ────────────────────────────────────────────────────────────
 
-static COMPILE_ERROR: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r"^(.+\.(?:java|kt)):\s*(\d+):\s*error:\s*(.+)$").unwrap()
-});
+static COMPILE_ERROR: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"^(.+\.(?:java|kt)):\s*(\d+):\s*error:\s*(.+)$").unwrap());
 
-static DEP_RESOLVE_ERROR: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r"Could not resolve ([^\s:]+:[^\s:]+:[^\s]+)").unwrap()
-});
+static DEP_RESOLVE_ERROR: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"Could not resolve ([^\s:]+:[^\s:]+:[^\s]+)").unwrap());
 
-static SDK_VERSION_ERROR: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r"ftc-sdk:([0-9]+\.[0-9]+(?:\.[0-9]+)?)").unwrap()
-});
+static SDK_VERSION_ERROR: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"ftc-sdk:([0-9]+\.[0-9]+(?:\.[0-9]+)?)").unwrap());
 
-static GRADLE_FAILURE: Lazy<Regex> =
-    Lazy::new(|| Regex::new(r"^FAILURE:|^BUILD FAILED").unwrap());
+static GRADLE_FAILURE: Lazy<Regex> = Lazy::new(|| Regex::new(r"^FAILURE:|^BUILD FAILED").unwrap());
 
-static GRADLE_SUCCESS: Lazy<Regex> =
-    Lazy::new(|| Regex::new(r"^BUILD SUCCESSFUL").unwrap());
+static GRADLE_SUCCESS: Lazy<Regex> = Lazy::new(|| Regex::new(r"^BUILD SUCCESSFUL").unwrap());
 
-static TASK_LINE: Lazy<Regex> =
-    Lazy::new(|| Regex::new(r"^> Task :([^\s]+)").unwrap());
-
-static WARNING_LINE: Lazy<Regex> =
-    Lazy::new(|| Regex::new(r"(?i)warning:").unwrap());
+static TASK_LINE: Lazy<Regex> = Lazy::new(|| Regex::new(r"^> Task :([^\s]+)").unwrap());
 
 // ── Parser ────────────────────────────────────────────────────────────────────
 

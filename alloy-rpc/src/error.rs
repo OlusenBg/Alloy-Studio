@@ -52,10 +52,7 @@ impl RpcError {
     }
 
     pub fn method_not_found(method: &str) -> Self {
-        Self::new(
-            METHOD_NOT_FOUND,
-            format!("Method not found: {method}"),
-        )
+        Self::new(METHOD_NOT_FOUND, format!("Method not found: {method}"))
     }
 
     pub fn invalid_params(msg: impl Into<String>) -> Self {

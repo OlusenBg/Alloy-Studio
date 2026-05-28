@@ -344,8 +344,7 @@ fn error_response(id: RpcId, code: i32, message: &str) -> RpcMessage {
 ///
 /// We inline this to avoid adding a new dependency for a single utility use.
 fn base64_decode(input: &str) -> Result<Vec<u8>, ()> {
-    const TABLE: &[u8; 64] =
-        b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+    const TABLE: &[u8; 64] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
     let mut rev = [0u8; 256];
     for (i, &b) in TABLE.iter().enumerate() {

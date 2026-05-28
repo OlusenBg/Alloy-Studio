@@ -66,10 +66,7 @@ impl GitStatus {
                         continue;
                     }
 
-                    let path = entry
-                        .path()
-                        .unwrap_or("")
-                        .to_string();
+                    let path = entry.path().unwrap_or("").to_string();
 
                     let old_path = entry
                         .head_to_index()
@@ -86,8 +83,7 @@ impl GitStatus {
                     let (kind, staged) = classify_status(bits);
 
                     // Compute additions/deletions from the relevant diff delta.
-                    let (additions, deletions) =
-                        diff_stats_for_entry(&entry, r).unwrap_or((0, 0));
+                    let (additions, deletions) = diff_stats_for_entry(&entry, r).unwrap_or((0, 0));
 
                     files.push(FileStatus {
                         path,
@@ -120,9 +116,7 @@ impl GitStatus {
 
     /// Iterator over untracked files.
     pub fn untracked(&self) -> impl Iterator<Item = &FileStatus> {
-        self.0
-            .iter()
-            .filter(|f| f.kind == StatusKind::Untracked)
+        self.0.iter().filter(|f| f.kind == StatusKind::Untracked)
     }
 
     /// Returns `true` if any file has a conflict marker.

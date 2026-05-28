@@ -74,10 +74,7 @@ impl FileDiff {
     }
 
     /// Diff index vs HEAD (staged changes).
-    pub async fn index_vs_head(
-        repo: &Repository,
-        path: Option<&str>,
-    ) -> anyhow::Result<Vec<Self>> {
+    pub async fn index_vs_head(repo: &Repository, path: Option<&str>) -> anyhow::Result<Vec<Self>> {
         let path = path.map(|s| s.to_string());
         repo.with_repo(move |r| {
             let mut diff_opts = git2::DiffOptions::new();
@@ -93,11 +90,7 @@ impl FileDiff {
                 Err(_) => None, // no commits yet
             };
 
-            let diff = r.diff_tree_to_index(
-                head_tree.as_ref(),
-                None,
-                Some(&mut diff_opts),
-            )?;
+            let diff = r.diff_tree_to_index(head_tree.as_ref(), None, Some(&mut diff_opts))?;
             parse_diff(&diff)
         })
         .await
@@ -114,8 +107,7 @@ impl FileDiff {
                 Err(_) => None,
             };
 
-            let diff =
-                r.diff_tree_to_workdir_with_index(head_tree.as_ref(), None)?;
+            let diff = r.diff_tree_to_workdir_with_index(head_tree.as_ref(), None)?;
             parse_diff(&diff)
         })
         .await
@@ -147,8 +139,14 @@ fn parse_diff(diff: &git2::Diff<'_>) -> anyhow::Result<Vec<FileDiff>> {
             .unwrap_or_default();
 
         let old_path = {
-            let old = delta.old_file().path().map(|p| p.to_string_lossy().into_owned());
-            let new = delta.new_file().path().map(|p| p.to_string_lossy().into_owned());
+            let old = delta
+                .old_file()
+                .path()
+                .map(|p| p.to_string_lossy().into_owned());
+            let new = delta
+                .new_file()
+                .path()
+                .map(|p| p.to_string_lossy().into_owned());
             match (&old, &new) {
                 (Some(o), Some(n)) if o != n => Some(o.clone()),
                 _ => None,

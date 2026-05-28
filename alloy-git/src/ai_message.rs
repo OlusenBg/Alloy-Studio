@@ -169,7 +169,13 @@ mod tests {
         GitStatus(files)
     }
 
-    fn make_file_status(path: &str, kind: StatusKind, staged: bool, adds: u32, dels: u32) -> FileStatus {
+    fn make_file_status(
+        path: &str,
+        kind: StatusKind,
+        staged: bool,
+        adds: u32,
+        dels: u32,
+    ) -> FileStatus {
         FileStatus {
             path: path.to_string(),
             old_path: None,
@@ -268,7 +274,13 @@ mod tests {
     fn scope_none_when_different_directories() {
         let status = make_status(vec![
             make_file_status("TeamCode/A.java", StatusKind::Modified, true, 1, 0),
-            make_file_status("FtcRobotController/B.java", StatusKind::Modified, true, 2, 0),
+            make_file_status(
+                "FtcRobotController/B.java",
+                StatusKind::Modified,
+                true,
+                2,
+                0,
+            ),
         ]);
         assert_eq!(CommitMessageBuilder::suggest_scope(&status), None);
     }

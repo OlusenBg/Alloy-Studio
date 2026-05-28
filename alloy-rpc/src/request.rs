@@ -14,7 +14,6 @@ use crate::types::{Position, TextEdit};
 #[serde(tag = "method", content = "params", rename_all = "snake_case")]
 pub enum Request {
     // --- Document lifecycle --------------------------------------------------
-
     /// Notify that a document has been opened in the editor.
     OpenDocument {
         uri: String,
@@ -38,7 +37,6 @@ pub enum Request {
     SaveDocument { uri: String },
 
     // --- Language features ---------------------------------------------------
-
     /// Request completion items at a given position.
     GetCompletion {
         uri: String,
@@ -69,7 +67,6 @@ pub enum Request {
     GetDiagnostics { uri: String },
 
     // --- Filesystem (proxy ops) ----------------------------------------------
-
     /// Read the byte content of a file.
     ReadFile { path: String },
 
@@ -89,7 +86,6 @@ pub enum Request {
     CreateDir { path: String, recursive: bool },
 
     // --- Search --------------------------------------------------------------
-
     /// Search for a pattern in a single open buffer.
     SearchInBuffer {
         uri: String,
@@ -106,7 +102,6 @@ pub enum Request {
     },
 
     // --- Build ---------------------------------------------------------------
-
     /// Start a Gradle build for the given project.
     StartBuild {
         project_root: String,
@@ -126,7 +121,6 @@ pub enum Request {
     },
 
     // --- Git -----------------------------------------------------------------
-
     /// Get the working-tree status of a repository.
     GitStatus { repo_root: String },
 
@@ -168,7 +162,6 @@ pub enum Request {
     GenerateCommitMessage { repo_root: String },
 
     // --- FTC-specific --------------------------------------------------------
-
     /// Scan all OpMode classes in the project.
     ScanOpModes { project_root: String },
 
@@ -176,12 +169,9 @@ pub enum Request {
     ParseHardwareConfig { file_path: String },
 
     /// Generate Java hardware field declarations from parsed assignments.
-    GenerateHardwareDeclarations {
-        assignments: Vec<serde_json::Value>,
-    },
+    GenerateHardwareDeclarations { assignments: Vec<serde_json::Value> },
 
     // --- Telemetry -----------------------------------------------------------
-
     /// Subscribe to real-time telemetry updates.
     SubscribeTelemetry,
 
@@ -192,7 +182,6 @@ pub enum Request {
     GetTelemetryHistory { key: String },
 
     // --- File watch ----------------------------------------------------------
-
     /// Watch a path for file system changes.
     WatchPath { path: String },
 
@@ -200,7 +189,6 @@ pub enum Request {
     UnwatchPath { path: String },
 
     // --- Workspace -----------------------------------------------------------
-
     /// Open a workspace rooted at `root`.
     OpenWorkspace { root: String },
 

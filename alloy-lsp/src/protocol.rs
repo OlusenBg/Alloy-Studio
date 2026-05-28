@@ -21,10 +21,7 @@ pub fn next_id() -> i64 {
 // ---------------------------------------------------------------------------
 
 /// Build a JSON-RPC request object for the given LSP request type.
-pub fn make_request<R: lsp_types::request::Request>(
-    id: i64,
-    params: R::Params,
-) -> serde_json::Value
+pub fn make_request<R: lsp_types::request::Request>(id: i64, params: R::Params) -> serde_json::Value
 where
     R::Params: Serialize,
 {

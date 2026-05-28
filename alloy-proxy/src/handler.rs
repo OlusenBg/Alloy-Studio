@@ -3,12 +3,12 @@
 use std::path::Path;
 use std::sync::Arc;
 
-use alloy_rpc::types::{DirEntry, FileStat, FileEvent};
+use alloy_rpc::types::{DirEntry, FileEvent, FileStat};
 use crossbeam_channel::{Receiver, Sender};
 
 use crate::digest::DigestCache;
+use crate::fs_ops;
 use crate::watcher::FileWatcher;
-use crate::{fs_ops};
 
 /// Handles incoming proxy requests by dispatching to filesystem operations.
 ///
@@ -27,8 +27,7 @@ impl RequestHandler {
     /// The server uses the returned receiver to forward events as
     /// `Notification::FileChanged` to connected clients.
     pub fn new() -> anyhow::Result<(Self, Receiver<FileEvent>)> {
-        let (tx, rx): (Sender<FileEvent>, Receiver<FileEvent>) =
-            crossbeam_channel::unbounded();
+        let (tx, rx): (Sender<FileEvent>, Receiver<FileEvent>) = crossbeam_channel::unbounded();
 
         let watcher = Arc::new(FileWatcher::new(tx)?);
         let digest_cache = Arc::new(DigestCache::new());

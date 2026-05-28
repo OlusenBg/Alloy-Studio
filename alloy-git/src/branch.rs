@@ -48,10 +48,7 @@ impl BranchList {
 
                     let commit = r.find_commit(commit_oid)?;
                     let commit_id = commit_oid.to_string();
-                    let commit_summary = commit
-                        .summary()
-                        .unwrap_or("")
-                        .to_string();
+                    let commit_summary = commit.summary().unwrap_or("").to_string();
 
                     let upstream = branch
                         .upstream()
@@ -105,20 +102,11 @@ pub async fn checkout(repo: &Repository, branch_name: &str) -> anyhow::Result<()
 /// Create a new local branch.
 ///
 /// If `from_head` is `true`, the branch is created at HEAD.
-pub async fn create_branch(
-    repo: &Repository,
-    name: &str,
-    from_head: bool,
-) -> anyhow::Result<()> {
+pub async fn create_branch(repo: &Repository, name: &str, from_head: bool) -> anyhow::Result<()> {
     let name = name.to_string();
     repo.with_repo(move |r| {
-        let target_commit = if from_head {
-            let head = r.head()?;
-            head.peel_to_commit()?
-        } else {
-            let head = r.head()?;
-            head.peel_to_commit()?
-        };
+        let _ = from_head; // both paths currently resolve to HEAD
+        let target_commit = r.head()?.peel_to_commit()?;
 
         r.branch(&name, &target_commit, false)?;
         Ok(())

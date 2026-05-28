@@ -105,10 +105,9 @@ impl BufferSearcher {
             let replacement_text = if is_regex {
                 // For regex mode expand back-references.
                 let mut dest = String::new();
-                re.captures(&text[mat.start()..mat.end()])
-                    .map(|caps| {
-                        caps.expand(replacement, &mut dest);
-                    });
+                if let Some(caps) = re.captures(&text[mat.start()..mat.end()]) {
+                    caps.expand(replacement, &mut dest);
+                }
                 dest
             } else {
                 replacement.to_owned()
@@ -184,7 +183,10 @@ fn build_regex(pattern: &str, is_regex: bool) -> anyhow::Result<Regex> {
 
 /// Directories to skip during workspace search.
 fn is_ignored_dir(name: &str) -> bool {
-    matches!(name, ".git" | "build" | ".gradle" | ".idea" | "node_modules" | "__pycache__")
+    matches!(
+        name,
+        ".git" | "build" | ".gradle" | ".idea" | "node_modules" | "__pycache__"
+    )
 }
 
 /// The blocking work for [`WorkspaceSearcher::search`].
@@ -202,9 +204,7 @@ fn search_blocking(
     let glob_re: Option<Regex> = file_glob
         .map(|g| {
             // Convert a simple glob (* → .*, ? → .) to a regex.
-            let escaped = regex::escape(g)
-                .replace(r"\*", ".*")
-                .replace(r"\?", ".");
+            let escaped = regex::escape(g).replace(r"\*", ".*").replace(r"\?", ".");
             Regex::new(&format!("^{escaped}$"))
                 .map_err(|e| anyhow::anyhow!("invalid glob '{g}': {e}"))
         })
@@ -241,10 +241,7 @@ fn search_blocking(
 
         // Apply file-name glob filter.
         if let Some(ref g) = glob_re {
-            let name = path
-                .file_name()
-                .and_then(|n| n.to_str())
-                .unwrap_or("");
+            let name = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
             if !g.is_match(name) {
                 continue;
             }

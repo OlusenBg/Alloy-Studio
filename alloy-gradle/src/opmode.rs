@@ -8,22 +8,17 @@ use walkdir::WalkDir;
 // ── Patterns ──────────────────────────────────────────────────────────────────
 
 static TELEOP_ANNOTATION: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(
-        r#"@TeleOp\s*\(\s*name\s*=\s*"([^"]+)"(?:\s*,\s*group\s*=\s*"([^"]+)")?\s*\)"#,
-    )
-    .unwrap()
+    Regex::new(r#"@TeleOp\s*\(\s*name\s*=\s*"([^"]+)"(?:\s*,\s*group\s*=\s*"([^"]+)")?\s*\)"#)
+        .unwrap()
 });
 
 static AUTONOMOUS_ANNOTATION: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(
-        r#"@Autonomous\s*\(\s*name\s*=\s*"([^"]+)"(?:\s*,\s*group\s*=\s*"([^"]+)")?\s*\)"#,
-    )
-    .unwrap()
+    Regex::new(r#"@Autonomous\s*\(\s*name\s*=\s*"([^"]+)"(?:\s*,\s*group\s*=\s*"([^"]+)")?\s*\)"#)
+        .unwrap()
 });
 
-static CLASS_DECLARATION: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r"\bclass\s+(\w+)\s+extends\s+\w*(?:Linear)?OpMode\b").unwrap()
-});
+static CLASS_DECLARATION: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"\bclass\s+(\w+)\s+extends\s+\w*(?:Linear)?OpMode\b").unwrap());
 
 static DISABLED_ANNOTATION: Lazy<Regex> = Lazy::new(|| Regex::new(r"@Disabled").unwrap());
 
@@ -160,9 +155,7 @@ impl OpModeScanner {
 
     /// Collect all `@TeleOp` and `@Autonomous` annotations as
     /// `(kind, display_name, group, byte_offset)`.
-    fn collect_annotations(
-        content: &str,
-    ) -> Vec<(OpModeKind, String, Option<String>, usize)> {
+    fn collect_annotations(content: &str) -> Vec<(OpModeKind, String, Option<String>, usize)> {
         let mut out = Vec::new();
 
         for caps in TELEOP_ANNOTATION.captures_iter(content) {
@@ -187,7 +180,11 @@ impl OpModeScanner {
     /// Convert a byte offset into a 1-based line number.
     fn byte_offset_to_line(content: &str, offset: usize) -> u32 {
         let safe_offset = offset.min(content.len());
-        content[..safe_offset].chars().filter(|&c| c == '\n').count() as u32 + 1
+        content[..safe_offset]
+            .chars()
+            .filter(|&c| c == '\n')
+            .count() as u32
+            + 1
     }
 
     /// Extract the `package foo.bar.baz;` declaration from Java/Kotlin source.
@@ -210,10 +207,7 @@ mod tests {
     use tempfile::NamedTempFile;
 
     fn write_java(content: &str) -> NamedTempFile {
-        let mut f = tempfile::Builder::new()
-            .suffix(".java")
-            .tempfile()
-            .unwrap();
+        let mut f = tempfile::Builder::new().suffix(".java").tempfile().unwrap();
         f.write_all(content.as_bytes()).unwrap();
         f
     }
@@ -238,7 +232,10 @@ public class MyDrive extends LinearOpMode {
         assert_eq!(op.kind, OpModeKind::TeleOp);
         assert_eq!(op.group.as_deref(), Some("Drive"));
         assert!(!op.is_disabled);
-        assert_eq!(op.package.as_deref(), Some("org.firstinspires.ftc.teamcode"));
+        assert_eq!(
+            op.package.as_deref(),
+            Some("org.firstinspires.ftc.teamcode")
+        );
     }
 
     #[test]

@@ -13,8 +13,7 @@ pub mod types;
 pub use codec::{framed, framed_with_max_length, AlloyCodec, AlloyFramed};
 pub use envelope::{RpcId, RpcMessage};
 pub use error::{
-    Error, RpcError, INTERNAL_ERROR, INVALID_PARAMS, INVALID_REQUEST, METHOD_NOT_FOUND,
-    PARSE_ERROR,
+    Error, RpcError, INTERNAL_ERROR, INVALID_PARAMS, INVALID_REQUEST, METHOD_NOT_FOUND, PARSE_ERROR,
 };
 pub use request::Request;
 pub use response::{Notification, Response};

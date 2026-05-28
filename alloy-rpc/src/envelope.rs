@@ -115,13 +115,8 @@ impl RpcMessage {
     // --- Constructors --------------------------------------------------------
 
     /// Build a request message (has an `id`, a `method`, and optional params).
-    pub fn new_request(
-        id: RpcId,
-        method: impl Into<String>,
-        params: impl Serialize,
-    ) -> Self {
-        let params_value = serde_json::to_value(params)
-            .unwrap_or(serde_json::Value::Null);
+    pub fn new_request(id: RpcId, method: impl Into<String>, params: impl Serialize) -> Self {
+        let params_value = serde_json::to_value(params).unwrap_or(serde_json::Value::Null);
         let params = if params_value.is_null() {
             None
         } else {
@@ -140,8 +135,7 @@ impl RpcMessage {
 
     /// Build a notification message (no `id`).
     pub fn new_notification(method: impl Into<String>, params: impl Serialize) -> Self {
-        let params_value = serde_json::to_value(params)
-            .unwrap_or(serde_json::Value::Null);
+        let params_value = serde_json::to_value(params).unwrap_or(serde_json::Value::Null);
         let params = if params_value.is_null() {
             None
         } else {
@@ -160,8 +154,7 @@ impl RpcMessage {
 
     /// Build a successful response message.
     pub fn new_ok(id: RpcId, result: impl Serialize) -> Self {
-        let result_value = serde_json::to_value(result)
-            .unwrap_or(serde_json::Value::Null);
+        let result_value = serde_json::to_value(result).unwrap_or(serde_json::Value::Null);
 
         Self {
             jsonrpc: Self::VERSION.to_owned(),

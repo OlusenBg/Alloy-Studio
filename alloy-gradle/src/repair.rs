@@ -50,17 +50,18 @@ struct CompiledRule {
     make_patch: fn(&str) -> RepairPatch,
 }
 
+type RuleSpec = (
+    &'static str,
+    &'static str,
+    &'static str,
+    &'static str,
+    f32,
+    bool,
+    fn(&str) -> RepairPatch,
+);
+
 fn make_rules() -> Vec<CompiledRule> {
-    // Each entry: (id, pattern, title, description, confidence, auto_applicable, make_patch)
-    let specs: &[(
-        &'static str,
-        &'static str,
-        &'static str,
-        &'static str,
-        f32,
-        bool,
-        fn(&str) -> RepairPatch,
-    )] = &[
+    let specs: &[RuleSpec] = &[
         // Rule 1 — could-not-resolve-sdk
         (
             "could-not-resolve-sdk",
@@ -189,15 +190,17 @@ fn make_rules() -> Vec<CompiledRule> {
 
     specs
         .iter()
-        .map(|(id, pat, title, desc, conf, auto, make_patch)| CompiledRule {
-            id,
-            pattern: Regex::new(pat).expect("static regex should be valid"),
-            title,
-            description: desc,
-            confidence: *conf,
-            auto_applicable: *auto,
-            make_patch: *make_patch,
-        })
+        .map(
+            |(id, pat, title, desc, conf, auto, make_patch)| CompiledRule {
+                id,
+                pattern: Regex::new(pat).expect("static regex should be valid"),
+                title,
+                description: desc,
+                confidence: *conf,
+                auto_applicable: *auto,
+                make_patch: *make_patch,
+            },
+        )
         .collect()
 }
 
@@ -238,7 +241,11 @@ impl RepairEngine {
         }
 
         // Sort by confidence descending
-        suggestions.sort_by(|a, b| b.confidence.partial_cmp(&a.confidence).unwrap_or(std::cmp::Ordering::Equal));
+        suggestions.sort_by(|a, b| {
+            b.confidence
+                .partial_cmp(&a.confidence)
+                .unwrap_or(std::cmp::Ordering::Equal)
+        });
         suggestions
     }
 
@@ -308,7 +315,10 @@ mod tests {
         ];
         let suggestions = engine.diagnose(&errors);
         // Should only appear once
-        let count = suggestions.iter().filter(|s| s.id == "compile-error-generic").count();
+        let count = suggestions
+            .iter()
+            .filter(|s| s.id == "compile-error-generic")
+            .count();
         assert_eq!(count, 1);
     }
 
@@ -342,7 +352,10 @@ mod tests {
             BuildErrorKind::Compile,
         )];
         let suggestions = engine.diagnose(&errors);
-        let s = suggestions.iter().find(|s| s.id == "annotation-processor").unwrap();
+        let s = suggestions
+            .iter()
+            .find(|s| s.id == "annotation-processor")
+            .unwrap();
         assert!(matches!(s.patch, RepairPatch::GradleCommand { .. }));
         assert!(s.auto_applicable);
     }

@@ -16,4 +16,6 @@ pub use client::LspClient;
 pub use error::LspError;
 pub use ftc_jdtls::{FtcJdtlsConfig, FtcSdkLocator};
 pub use manager::{LspManager, ServerHandle};
-pub use protocol::{JsonRpcError, JsonRpcMessage, make_notification, make_request, next_id, parse_response};
+pub use protocol::{
+    make_notification, make_request, next_id, parse_response, JsonRpcError, JsonRpcMessage,
+};
