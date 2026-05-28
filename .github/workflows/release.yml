@@ -1,11 +1,9 @@
 name: Release
-# Re-registered to surface workflow_dispatch in the Actions UI
 
-# ─────────────────────────────────────────────────────────────────
-# Triggers
-#   1. Automatic: push of a v*.*.* tag  (e.g. git tag v1.2.3 && git push --tags)
-#   2. Manual:    Actions → Release → Run workflow → enter "v1.2.3"
-# ─────────────────────────────────────────────────────────────────
+# Triggers:
+#   1. Automatic: push of a v*.*.* tag (e.g. git tag v1.2.3 && git push --tags)
+#   2. Manual:    Actions -> Release -> Run workflow -> enter "v1.2.3"
+
 on:
   push:
     tags:
@@ -13,7 +11,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: "Version to release — include the v prefix (e.g. v1.1.1)"
+        description: "Version to release (include the v prefix, e.g. v1.1.1)"
         required: true
         type: string
 
@@ -25,31 +23,27 @@ env:
 
 jobs:
   build:
-    name: Build — ${{ matrix.name }}
+    name: Build - ${{ matrix.name }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
         include:
-          # ── Linux x86_64 ─────────────────────────────────────────────
           - name: linux-x86_64
             os: ubuntu-22.04
             target: x86_64-unknown-linux-gnu
             artifact_suffix: linux-x86_64
 
-          # ── macOS Apple Silicon ──────────────────────────────────────
           - name: macos-arm64
             os: macos-14
             target: aarch64-apple-darwin
             artifact_suffix: macos-arm64
 
-          # ── macOS Intel ──────────────────────────────────────────────
           - name: macos-x86_64
             os: macos-13
             target: x86_64-apple-darwin
             artifact_suffix: macos-x86_64
 
-          # ── Windows x86_64 ───────────────────────────────────────────
           - name: windows-x86_64
             os: windows-latest
             target: x86_64-pc-windows-msvc
@@ -58,7 +52,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # ── Resolve version (works for both tag push and workflow_dispatch) ──
+      # Resolve version (works for both tag push and workflow_dispatch)
       - name: Resolve version
         id: ver
         shell: bash
@@ -68,16 +62,13 @@ jobs:
           else
             RAW="${GITHUB_REF_NAME}"
           fi
-          # Strip leading 'v' to get bare semver (e.g. 1.1.1)
           VERSION="${RAW#v}"
           TAG="v${VERSION}"
           echo "VERSION=${VERSION}" >> "$GITHUB_OUTPUT"
           echo "TAG=${TAG}"         >> "$GITHUB_OUTPUT"
-          # Also export to GITHUB_ENV so shell steps can use $VERSION / $TAG
           echo "VERSION=${VERSION}" >> "$GITHUB_ENV"
           echo "TAG=${TAG}"         >> "$GITHUB_ENV"
 
-      # ── Rust toolchain ────────────────────────────────────────────────
       - name: Install Rust stable
         uses: dtolnay/rust-toolchain@stable
         with:
@@ -88,7 +79,6 @@ jobs:
         with:
           key: release-${{ matrix.name }}
 
-      # ── System dependencies ───────────────────────────────────────────
       - name: Install system dependencies (Linux)
         if: runner.os == 'Linux'
         run: |
@@ -96,13 +86,12 @@ jobs:
           sudo apt-get install -y --no-install-recommends \
             libssl-dev pkg-config dpkg-dev fakeroot
 
-      # ── Build ─────────────────────────────────────────────────────────
       - name: Build release binary
         run: cargo build --release --locked --bin alloy --target ${{ matrix.target }}
 
-      # ══════════════════════════════════════════════════════════════════
+      # ---------------------------------------------------------------
       # LINUX ARTIFACTS
-      # ══════════════════════════════════════════════════════════════════
+      # ---------------------------------------------------------------
       - name: Package Linux tar.gz
         if: runner.os == 'Linux'
         run: |
@@ -118,28 +107,14 @@ jobs:
         run: |
           DEB_ROOT="deb-root"
           DEB_NAME="alloy-studio_${VERSION}_amd64"
-
-          mkdir -p "${DEB_ROOT}/DEBIAN"
-          mkdir -p "${DEB_ROOT}/usr/bin"
-          mkdir -p "${DEB_ROOT}/usr/share/doc/alloy-studio"
-
+          mkdir -p "${DEB_ROOT}/DEBIAN" "${DEB_ROOT}/usr/bin" "${DEB_ROOT}/usr/share/doc/alloy-studio"
           cp "target/${{ matrix.target }}/release/alloy" "${DEB_ROOT}/usr/bin/alloy"
           chmod 0755 "${DEB_ROOT}/usr/bin/alloy"
-
           cp LICENSE "${DEB_ROOT}/usr/share/doc/alloy-studio/copyright" 2>/dev/null || \
-            echo "Copyright Alloy Studio Contributors. Apache-2.0." \
+            printf 'Copyright Alloy Studio Contributors. Apache-2.0.\n' \
               > "${DEB_ROOT}/usr/share/doc/alloy-studio/copyright"
-
-          cat > "${DEB_ROOT}/DEBIAN/control" <<EOF
-Package: alloy-studio
-Version: ${VERSION}
-Architecture: amd64
-Maintainer: Alloy Studio Contributors <noreply@alloystudio.dev>
-Description: GPU-accelerated FTC robotics code editor
- Alloy Studio is an AI-native code editor purpose-built for
- FIRST Tech Challenge robotics teams.
-EOF
-
+          printf 'Package: alloy-studio\nVersion: %s\nArchitecture: amd64\nMaintainer: Alloy Studio Contributors <noreply@alloystudio.dev>\nDescription: GPU-accelerated FTC robotics code editor\n Alloy Studio is an AI-native code editor purpose-built for\n FIRST Tech Challenge robotics teams.\n' \
+            "${VERSION}" > "${DEB_ROOT}/DEBIAN/control"
           dpkg-deb --build "$DEB_ROOT" "${DEB_NAME}.deb"
           echo "DEB_PKG=${DEB_NAME}.deb" >> "$GITHUB_ENV"
 
@@ -148,47 +123,27 @@ EOF
         run: |
           APP_DIR="AlloyStudio.AppDir"
           APPIMAGE_NAME="alloy-studio-${VERSION}-x86_64.AppImage"
-
           curl -sSL -o appimagetool \
             "https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage"
           chmod +x appimagetool
-
-          mkdir -p "${APP_DIR}/usr/bin"
-          mkdir -p "${APP_DIR}/usr/share/applications"
-          mkdir -p "${APP_DIR}/usr/share/icons/hicolor/256x256/apps"
-
+          mkdir -p "${APP_DIR}/usr/bin" "${APP_DIR}/usr/share/applications" \
+            "${APP_DIR}/usr/share/icons/hicolor/256x256/apps"
           cp "target/${{ matrix.target }}/release/alloy" "${APP_DIR}/usr/bin/alloy"
-
-          cat > "${APP_DIR}/alloy-studio.desktop" <<'DESKTOP'
-[Desktop Entry]
-Name=Alloy Studio
-Exec=alloy
-Icon=alloy-studio
-Type=Application
-Categories=Development;IDE;
-Comment=FTC robotics code editor
-DESKTOP
+          printf '[Desktop Entry]\nName=Alloy Studio\nExec=alloy\nIcon=alloy-studio\nType=Application\nCategories=Development;IDE;\nComment=FTC robotics code editor\n' \
+            > "${APP_DIR}/alloy-studio.desktop"
           cp "${APP_DIR}/alloy-studio.desktop" \
             "${APP_DIR}/usr/share/applications/alloy-studio.desktop"
-
-          # 1×1 white PNG placeholder icon
-          printf '\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01\x08\x02\x00\x00\x00\x90wS\xde\x00\x00\x00\x0cIDATx\x9cc\xf8\xff\xff?\x00\x05\xfe\x02\xfe\xdc\xccY\xe7\x00\x00\x00\x00IEND\xaeB`\x82' \
-            > "${APP_DIR}/alloy-studio.png"
+          python3 -c "import struct,zlib; c=lambda t,d: struct.pack('>I',len(d))+t+d+struct.pack('>I',zlib.crc32(t+d)&0xffffffff); h=struct.pack('>IIBBBBB',1,1,8,2,0,0,0); open('${APP_DIR}/alloy-studio.png','wb').write(b'\x89PNG\r\n\x1a\n'+c(b'IHDR',h)+c(b'IDAT',zlib.compress(b'\x00\xff\xff\xff'))+c(b'IEND',b''))"
           cp "${APP_DIR}/alloy-studio.png" \
             "${APP_DIR}/usr/share/icons/hicolor/256x256/apps/alloy-studio.png"
-
-          cat > "${APP_DIR}/AppRun" <<'APPRUN'
-#!/bin/sh
-exec "$(dirname "$0")/usr/bin/alloy" "$@"
-APPRUN
+          printf '#!/bin/sh\nexec "$(dirname "$0")/usr/bin/alloy" "$@"\n' > "${APP_DIR}/AppRun"
           chmod +x "${APP_DIR}/AppRun"
-
           ARCH=x86_64 ./appimagetool "${APP_DIR}" "${APPIMAGE_NAME}" || true
           echo "APPIMAGE=${APPIMAGE_NAME}" >> "$GITHUB_ENV"
 
-      # ══════════════════════════════════════════════════════════════════
+      # ---------------------------------------------------------------
       # MACOS ARTIFACTS
-      # ══════════════════════════════════════════════════════════════════
+      # ---------------------------------------------------------------
       - name: Package macOS tar.gz
         if: runner.os == 'macOS'
         run: |
@@ -205,48 +160,24 @@ APPRUN
           APP_BUNDLE="AlloyStudio.app"
           DMG_NAME="alloy-studio-${VERSION}-${{ matrix.artifact_suffix }}.dmg"
           DMG_STAGING="dmg-staging"
-
-          mkdir -p "${APP_BUNDLE}/Contents/MacOS"
-          mkdir -p "${APP_BUNDLE}/Contents/Resources"
-
-          cp "target/${{ matrix.target }}/release/alloy" \
-            "${APP_BUNDLE}/Contents/MacOS/alloy"
+          mkdir -p "${APP_BUNDLE}/Contents/MacOS" "${APP_BUNDLE}/Contents/Resources"
+          cp "target/${{ matrix.target }}/release/alloy" "${APP_BUNDLE}/Contents/MacOS/alloy"
           chmod +x "${APP_BUNDLE}/Contents/MacOS/alloy"
-
-          cat > "${APP_BUNDLE}/Contents/Info.plist" <<PLIST
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
-  "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-<dict>
-  <key>CFBundleName</key>             <string>Alloy Studio</string>
-  <key>CFBundleDisplayName</key>      <string>Alloy Studio</string>
-  <key>CFBundleIdentifier</key>       <string>dev.alloystudio.alloy</string>
-  <key>CFBundleVersion</key>          <string>${VERSION}</string>
-  <key>CFBundleShortVersionString</key><string>${VERSION}</string>
-  <key>CFBundleExecutable</key>       <string>alloy</string>
-  <key>CFBundlePackageType</key>      <string>APPL</string>
-  <key>LSMinimumSystemVersion</key>   <string>12.0</string>
-  <key>NSHighResolutionCapable</key>  <true/>
-</dict>
-</plist>
-PLIST
-
+          printf '<?xml version="1.0" encoding="UTF-8"?>\n<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">\n<plist version="1.0">\n<dict>\n  <key>CFBundleName</key>              <string>Alloy Studio</string>\n  <key>CFBundleDisplayName</key>       <string>Alloy Studio</string>\n  <key>CFBundleIdentifier</key>        <string>dev.alloystudio.alloy</string>\n  <key>CFBundleVersion</key>           <string>%s</string>\n  <key>CFBundleShortVersionString</key><string>%s</string>\n  <key>CFBundleExecutable</key>        <string>alloy</string>\n  <key>CFBundlePackageType</key>       <string>APPL</string>\n  <key>LSMinimumSystemVersion</key>    <string>12.0</string>\n  <key>NSHighResolutionCapable</key>   <true/>\n</dict>\n</plist>\n' \
+            "${VERSION}" "${VERSION}" > "${APP_BUNDLE}/Contents/Info.plist"
           mkdir -p "$DMG_STAGING"
           cp -R "$APP_BUNDLE" "$DMG_STAGING/"
           ln -s /Applications "$DMG_STAGING/Applications"
-
           hdiutil create \
             -volname "Alloy Studio ${VERSION}" \
             -srcfolder "$DMG_STAGING" \
             -ov -format UDZO \
             "$DMG_NAME"
-
           echo "DMG=${DMG_NAME}" >> "$GITHUB_ENV"
 
-      # ══════════════════════════════════════════════════════════════════
+      # ---------------------------------------------------------------
       # WINDOWS ARTIFACTS
-      # ══════════════════════════════════════════════════════════════════
+      # ---------------------------------------------------------------
       - name: Package Windows .zip
         if: runner.os == 'Windows'
         shell: pwsh
@@ -260,11 +191,10 @@ PLIST
           Compress-Archive -Path "$staging\*" -DestinationPath "$staging.zip"
           "ZIP=$staging.zip" | Out-File -FilePath $env:GITHUB_ENV -Append
 
-      # ══════════════════════════════════════════════════════════════════
-      # UPLOAD ARTIFACTS → GitHub Release
-      # tag_name is passed explicitly so workflow_dispatch releases work
-      # without a pre-existing tag (softprops creates the tag + release).
-      # ══════════════════════════════════════════════════════════════════
+      # ---------------------------------------------------------------
+      # UPLOAD TO GITHUB RELEASE
+      # tag_name is explicit so workflow_dispatch can create the tag too
+      # ---------------------------------------------------------------
       - name: Upload Linux artifacts
         if: runner.os == 'Linux'
         uses: softprops/action-gh-release@v2
