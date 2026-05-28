@@ -1,4 +1,5 @@
 name: Release
+# Re-registered to surface workflow_dispatch in the Actions UI
 
 # ─────────────────────────────────────────────────────────────────
 # Triggers
