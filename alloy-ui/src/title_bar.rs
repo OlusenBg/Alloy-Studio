@@ -1,22 +1,22 @@
 //! Alloy title bar — 36 px chrome strip across the top of the window.
 //!
 //! Layout (left → right):
-//!   • traffic-light triplet (decorative on macOS, hidden elsewhere)
+//!   • traffic-light triplet (close / minimize / maximise — functional on all platforms)
+//!   • drag region (double-click to toggle maximise)
 //!   • Alloy logo + Home chevron
-//!   • flex spacer
+//!   • flex spacer (drag region continues through here)
 //!   • centered command pill (project · team · branch · ⌘K)
 //!   • flex spacer
-//!   • Deploy button (primary, orange glow)
+//!   • Deploy button
 //!   • Settings icon
 //!   • update dot
-//!
-//! Reference: kit/TitleBar.jsx in the Alloy design system.
+//!   • right drag region
 
 use std::sync::Arc;
 
 use floem::reactive::{RwSignal, SignalGet};
 use floem::style::CursorStyle;
-use floem::views::{container, empty, h_stack, label, Decorators};
+use floem::views::{container, drag_window_area, empty, h_stack, label, Decorators};
 use floem::View;
 
 use crate::theme::*;
@@ -40,29 +40,33 @@ pub fn alloy_title_bar(
     show_run: RwSignal<bool>,
     h: TitleBarHandlers,
 ) -> impl View {
-    h_stack((
-        traffic_lights(),
-        logo_and_home(workspace_open, h.on_home.clone()),
-        spacer(),
-        command_pill(project_name, team, branch, h.on_palette.clone()),
-        spacer(),
-        right_cluster(
-            has_update,
-            show_run,
-            h.on_run.clone(),
-            h.on_settings.clone(),
-        ),
-    ))
-    .style(|s| {
-        s.width_pct(100.0)
-            .height(UI_HEADER_HEIGHT)
-            .background(BG_SURFACE)
-            .border_bottom(1.0)
-            .border_color(BG_EDGE)
-            .padding_horiz(8.0)
-            .items_center()
-            .gap(8.0)
-    })
+    // Wrap the entire bar in a drag_window_area so users can grab anywhere
+    // that isn't an interactive control to move the window.
+    drag_window_area(
+        h_stack((
+            traffic_lights(),
+            logo_and_home(workspace_open, h.on_home.clone()),
+            spacer(),
+            command_pill(project_name, team, branch, h.on_palette.clone()),
+            spacer(),
+            right_cluster(
+                has_update,
+                show_run,
+                h.on_run.clone(),
+                h.on_settings.clone(),
+            ),
+        ))
+        .style(|s| {
+            s.width_pct(100.0)
+                .height(UI_HEADER_HEIGHT)
+                .background(BG_SURFACE)
+                .border_bottom(1.0)
+                .border_color(BG_EDGE)
+                .padding_horiz(8.0)
+                .items_center()
+                .gap(8.0)
+        }),
+    )
 }
 
 // ── pieces ────────────────────────────────────────────────────────────────────
@@ -71,31 +75,36 @@ fn spacer() -> impl View {
     container(empty()).style(|s| s.flex_grow(1.0f32))
 }
 
+/// Three traffic-light buttons — functional on every platform.
 fn traffic_lights() -> impl View {
-    #[cfg(target_os = "macos")]
-    {
-        h_stack((
-            dot(Color::from_rgb8(0xFF, 0x5F, 0x57)),
-            dot(Color::from_rgb8(0xFE, 0xBC, 0x2E)),
-            dot(Color::from_rgb8(0x28, 0xC8, 0x40)),
-        ))
-        .style(|s| s.gap(8.0).padding_horiz(6.0))
-    }
-    #[cfg(not(target_os = "macos"))]
-    {
-        // 36 px reserved so windows on win/linux still align right.
-        container(empty()).style(|s| s.width(0.0))
-    }
+    h_stack((
+        // Red — close
+        traffic_dot(floem::peniko::Color::from_rgb8(0xFF, 0x5F, 0x57), || {
+            floem::quit_app()
+        }),
+        // Yellow — minimise
+        traffic_dot(floem::peniko::Color::from_rgb8(0xFE, 0xBC, 0x2E), || {
+            floem::action::minimize_window()
+        }),
+        // Green — toggle maximise / fullscreen
+        traffic_dot(floem::peniko::Color::from_rgb8(0x28, 0xC8, 0x40), || {
+            floem::action::toggle_window_maximized()
+        }),
+    ))
+    .style(|s| s.gap(8.0).padding_horiz(6.0).items_center())
 }
 
-#[cfg(target_os = "macos")]
-fn dot(c: floem::peniko::Color) -> impl View {
-    container(empty()).style(move |s| {
-        s.width(12.0)
-            .height(12.0)
-            .border_radius(R_FULL)
-            .background(c)
-    })
+fn traffic_dot(color: floem::peniko::Color, action: impl Fn() + 'static) -> impl View {
+    container(empty())
+        .on_click_stop(move |_| action())
+        .style(move |s| {
+            s.width(12.0)
+                .height(12.0)
+                .border_radius(R_FULL)
+                .background(color)
+                .cursor(CursorStyle::Pointer)
+                .hover(|s| s.opacity(0.75))
+        })
 }
 
 fn logo_and_home(workspace_open: RwSignal<bool>, on_home: Arc<dyn Fn()>) -> impl View {
@@ -141,8 +150,6 @@ fn command_pill(
 ) -> impl View {
     container(
         h_stack((
-            // folder glyph (orange) — use a small filled square as placeholder
-            // for the codicon; lapce-app will replace with `svg(LapceIcons::FOLDER)`
             label(|| "▸".to_string())
                 .style(|s| s.color(ALLOY_ORANGE).font_size(T_SMALL).margin_right(2.0)),
             label(move || project_name.get()).style(|s| {
@@ -200,7 +207,7 @@ fn right_cluster(
                 }
             },
         ),
-        title_icon_button("⚙", "Settings", on_settings.clone()),
+        title_icon_button("⚙", on_settings.clone()),
         update_dot(has_update),
     ))
     .style(|s| s.items_center().gap(4.0))
@@ -234,11 +241,7 @@ fn run_button(on_run: Arc<dyn Fn()>) -> impl View {
     })
 }
 
-fn title_icon_button(
-    glyph: &'static str,
-    _tooltip: &'static str,
-    on_click: Arc<dyn Fn()>,
-) -> impl View {
+fn title_icon_button(glyph: &'static str, on_click: Arc<dyn Fn()>) -> impl View {
     container(label(move || glyph.to_string()).style(|s| s.color(FG_3).font_size(T_MD)))
         .on_click_stop(move |_| (on_click)())
         .style(|s| {
