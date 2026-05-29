@@ -93,6 +93,7 @@ impl App {
     }
 
     /// Initialise all subsystems from the parsed CLI arguments.
+    #[allow(dead_code)]
     pub async fn new(args: Cli) -> anyhow::Result<Self> {
         // 1. Load config (from args.config or default path).
         let config_path = args.config.unwrap_or_else(AlloyConfig::default_config_path);
