@@ -6,7 +6,13 @@ publish = false
 
 [dependencies]
 floem = { git = "https://github.com/lapce/floem", branch = "main" }
-alloy-rpc = { path = "../alloy-rpc" }
+alloy-rpc       = { path = "../alloy-rpc" }
+alloy-core      = { path = "../alloy-core" }
+alloy-gradle    = { path = "../alloy-gradle" }
+alloy-git       = { path = "../alloy-git" }
+alloy-telemetry = { path = "../alloy-telemetry" }
+tokio           = { version = "1", features = ["rt", "sync"] }
+parking_lot     = "0.12"
 
 [features]
 default = []
