@@ -8,7 +8,7 @@
 
 use std::sync::Arc;
 
-use floem::reactive::{create_rw_signal, RwSignal, SignalGet, SignalUpdate};
+use floem::reactive::{RwSignal, SignalGet, SignalUpdate};
 use floem::style::CursorStyle;
 use floem::views::{container, dyn_stack, empty, h_stack, label, text_input, v_stack, Decorators};
 use floem::View;
@@ -103,7 +103,7 @@ pub struct SourceControlHandlers {
 // ── Entry point ──────────────────────────────────────────────────────────────
 
 pub fn source_control_page(s: SourceControlSignals, h: SourceControlHandlers) -> impl View {
-    let show_branches = create_rw_signal(false);
+    let show_branches = RwSignal::new(false);
 
     h_stack((
         left_pane(s.clone(), h.clone(), show_branches),
@@ -565,7 +565,7 @@ fn branch_palette(
     on_switch: Arc<dyn Fn(String)>,
     on_new: Arc<dyn Fn()>,
 ) -> impl View {
-    let query = create_rw_signal(String::new());
+    let query = RwSignal::new(String::new());
     container(
         v_stack((
             h_stack((

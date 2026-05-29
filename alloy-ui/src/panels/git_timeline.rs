@@ -2,7 +2,7 @@
 //!
 //! Reference: kit/GitTimeline.jsx.
 
-use floem::reactive::{create_rw_signal, RwSignal, SignalGet, SignalUpdate};
+use floem::reactive::{RwSignal, SignalGet, SignalUpdate};
 use floem::style::CursorStyle;
 use floem::views::{container, dyn_stack, empty, h_stack, label, text_input, v_stack, Decorators};
 use floem::View;
@@ -70,8 +70,8 @@ static HISTORY: &[CommitEntry] = &[
 ];
 
 pub fn git_timeline_panel() -> impl View {
-    let commit_msg = create_rw_signal(String::new());
-    let status_text = create_rw_signal("Ready".to_string());
+    let commit_msg = RwSignal::new(String::new());
+    let status_text = RwSignal::new("Ready".to_string());
 
     v_stack((
         staged_section(),

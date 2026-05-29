@@ -5,7 +5,7 @@
 
 use std::sync::Arc;
 
-use floem::reactive::{create_rw_signal, RwSignal, SignalGet, SignalUpdate};
+use floem::reactive::{RwSignal, SignalGet, SignalUpdate};
 use floem::style::CursorStyle;
 use floem::views::{container, dyn_stack, empty, h_stack, label, text_input, v_stack, Decorators};
 use floem::View;
@@ -63,7 +63,7 @@ impl SettingsCategory {
 }
 
 pub fn settings_page(initial: SettingsCategory) -> impl View {
-    let active_cat = create_rw_signal(initial);
+    let active_cat = RwSignal::new(initial);
 
     h_stack((left_rail(active_cat), right_content(active_cat)))
         .style(|s| s.width_pct(100.0).height_pct(100.0).background(BG_NAVY))
@@ -291,7 +291,7 @@ fn field<C: View + 'static>(label_text: &'static str, hint: &'static str, contro
 }
 
 fn text_field(initial: &str, mono: bool) -> impl View {
-    let sig = create_rw_signal(initial.to_string());
+    let sig = RwSignal::new(initial.to_string());
     text_input(sig).keyboard_navigable().style(move |s| {
         let s = s
             .flex_grow(1.0)
@@ -332,7 +332,7 @@ fn select_pill(value: &str, _options: &[&str]) -> impl View {
 }
 
 fn toggle(initial: bool, lbl: &'static str) -> impl View {
-    let sig = create_rw_signal(initial);
+    let sig = RwSignal::new(initial);
     h_stack((
         container(container(empty()).style(move |s| {
             let on = sig.get();
@@ -465,7 +465,7 @@ fn accent_swatches() -> impl View {
         STATUS_INFO,
         SYN_KEYWORD,
     ];
-    let chosen = create_rw_signal(0usize);
+    let chosen = RwSignal::new(0usize);
     let swatches = colors.into_iter().enumerate().map(|(i, c)| {
         container(empty())
             .on_click_stop(move |_| chosen.set(i))

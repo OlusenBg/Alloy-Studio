@@ -2,7 +2,7 @@
 //!
 //! Reference: kit/GradleRepair.jsx.
 
-use floem::reactive::{create_rw_signal, RwSignal, SignalGet, SignalUpdate};
+use floem::reactive::{RwSignal, SignalGet, SignalUpdate};
 use floem::style::CursorStyle;
 use floem::views::{container, dyn_stack, empty, h_stack, label, v_stack, Decorators};
 use floem::View;
@@ -70,8 +70,8 @@ const LOG_FAILED: &[LogLine] = &[
 ];
 
 pub fn gradle_repair_panel() -> impl View {
-    let build_state = create_rw_signal(BuildState::Failed);
-    let fix_applied = create_rw_signal(false);
+    let build_state = RwSignal::new(BuildState::Failed);
+    let fix_applied = RwSignal::new(false);
 
     v_stack((
         status_banner(build_state),

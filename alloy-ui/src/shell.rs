@@ -7,7 +7,7 @@
 
 use std::sync::Arc;
 
-use floem::reactive::{create_rw_signal, RwSignal, SignalGet, SignalUpdate};
+use floem::reactive::{RwSignal, SignalGet, SignalUpdate};
 use floem::style::CursorStyle;
 use floem::views::{container, dyn_stack, empty, h_stack, label, v_stack, Decorators};
 use floem::View;
@@ -125,10 +125,10 @@ const FILE_TREE: &[TreeNode] = &[
 /// Returns a view that fills the window.
 pub fn editor_shell() -> impl View {
     // ── Activity / sidebar ─────────────────────────────────────────────────
-    let activity = create_rw_signal(ActivityTab::Files);
+    let activity = RwSignal::new(ActivityTab::Files);
 
     // ── Editor tabs ────────────────────────────────────────────────────────
-    let tabs: RwSignal<Vec<EditorTab>> = create_rw_signal(vec![
+    let tabs: RwSignal<Vec<EditorTab>> = RwSignal::new(vec![
         EditorTab {
             id: "1".into(),
             name: "OpMode.java".into(),
@@ -154,41 +154,41 @@ pub fn editor_shell() -> impl View {
             dirty: false,
         },
     ]);
-    let active_tab = create_rw_signal("1".to_string());
-    let open_file = create_rw_signal("OpMode.java".to_string());
-    let breadcrumb = create_rw_signal(vec![
+    let active_tab = RwSignal::new("1".to_string());
+    let open_file = RwSignal::new("OpMode.java".to_string());
+    let breadcrumb = RwSignal::new(vec![
         "TeamCode".to_string(),
         "src/main/java".to_string(),
         "OpMode.java".to_string(),
     ]);
 
     // ── Bottom panel ───────────────────────────────────────────────────────
-    let bottom_tab = create_rw_signal(BottomPanelTab::Telemetry);
-    let bottom_hidden = create_rw_signal(false);
-    let bottom_max = create_rw_signal(false);
+    let bottom_tab = RwSignal::new(BottomPanelTab::Telemetry);
+    let bottom_hidden = RwSignal::new(false);
+    let bottom_max = RwSignal::new(false);
 
     // ── Title bar signals ──────────────────────────────────────────────────
-    let project_name = create_rw_signal("CenterStage-7842".to_string());
-    let team = create_rw_signal("Team 7842".to_string());
-    let branch = create_rw_signal("main".to_string());
-    let has_update = create_rw_signal(false);
-    let workspace_open = create_rw_signal(true);
-    let show_run = create_rw_signal(true);
+    let project_name = RwSignal::new("CenterStage-7842".to_string());
+    let team = RwSignal::new("Team 7842".to_string());
+    let branch = RwSignal::new("main".to_string());
+    let has_update = RwSignal::new(false);
+    let workspace_open = RwSignal::new(true);
+    let show_run = RwSignal::new(true);
 
     // ── Status bar signals ─────────────────────────────────────────────────
     let sb = StatusBarSignals {
-        branch: create_rw_signal("main".to_string()),
-        ahead: create_rw_signal(2u32),
-        behind: create_rw_signal(0u32),
-        lsp: create_rw_signal(LspState::Ready),
-        robot: create_rw_signal(RobotState::Connected),
-        error_count: create_rw_signal(1u32),
-        warn_count: create_rw_signal(2u32),
-        cursor_line: create_rw_signal(16u32),
-        cursor_col: create_rw_signal(53u32),
-        file_lang: create_rw_signal("Java".to_string()),
-        encoding: create_rw_signal("UTF-8".to_string()),
-        indent: create_rw_signal("Spaces: 4".to_string()),
+        branch: RwSignal::new("main".to_string()),
+        ahead: RwSignal::new(2u32),
+        behind: RwSignal::new(0u32),
+        lsp: RwSignal::new(LspState::Ready),
+        robot: RwSignal::new(RobotState::Connected),
+        error_count: RwSignal::new(1u32),
+        warn_count: RwSignal::new(2u32),
+        cursor_line: RwSignal::new(16u32),
+        cursor_col: RwSignal::new(53u32),
+        file_lang: RwSignal::new("Java".to_string()),
+        encoding: RwSignal::new("UTF-8".to_string()),
+        indent: RwSignal::new("Spaces: 4".to_string()),
     };
 
     let noop = || Arc::new(|| {}) as Arc<dyn Fn()>;
@@ -471,7 +471,7 @@ fn search_panel() -> impl View {
 // ── SCM sidebar pane ──────────────────────────────────────────────────────────
 
 fn scm_sidebar() -> impl View {
-    let commit_msg = create_rw_signal("add ArmController unit tests".to_string());
+    let commit_msg = RwSignal::new("add ArmController unit tests".to_string());
 
     v_stack((
         panel_header("Source Control"),

@@ -2,7 +2,7 @@
 //!
 //! Reference: kit/HardwareMapper.jsx.
 
-use floem::reactive::{create_rw_signal, RwSignal, SignalGet, SignalUpdate};
+use floem::reactive::{RwSignal, SignalGet, SignalUpdate};
 use floem::style::CursorStyle;
 use floem::views::{container, dyn_stack, empty, h_stack, label, v_stack, Decorators};
 use floem::View;
@@ -16,7 +16,7 @@ pub struct Port {
 }
 
 pub fn hardware_mapper_panel() -> impl View {
-    let motors = create_rw_signal(vec![
+    let motors = RwSignal::new(vec![
         Port {
             idx: 0,
             name: Some("driveL".to_string()),
@@ -32,7 +32,7 @@ pub fn hardware_mapper_panel() -> impl View {
         Port { idx: 3, name: None },
     ]);
 
-    let servos = create_rw_signal(vec![
+    let servos = RwSignal::new(vec![
         Port {
             idx: 0,
             name: Some("claw".to_string()),
@@ -47,7 +47,7 @@ pub fn hardware_mapper_panel() -> impl View {
         Port { idx: 5, name: None },
     ]);
 
-    let status_msg = create_rw_signal("Ready.".to_string());
+    let status_msg = RwSignal::new("Ready.".to_string());
 
     v_stack((
         scroll(

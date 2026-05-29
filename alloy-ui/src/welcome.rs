@@ -1,7 +1,7 @@
 //! Welcome / home screen shown before a project is opened.
 
 use crate::theme::*;
-use floem::reactive::{create_rw_signal, RwSignal, SignalGet};
+use floem::reactive::{RwSignal, SignalGet};
 use floem::style::CursorStyle;
 use floem::views::{container, empty, h_stack, img, label, v_stack, Decorators};
 use floem::View;

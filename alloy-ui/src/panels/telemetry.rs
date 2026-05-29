@@ -3,7 +3,7 @@
 //! Reference: kit/TelemetryPanel.jsx.
 
 use floem::peniko::Color;
-use floem::reactive::{create_rw_signal, RwSignal, SignalGet, SignalUpdate};
+use floem::reactive::{RwSignal, SignalGet, SignalUpdate};
 use floem::style::CursorStyle;
 use floem::views::{container, dyn_stack, empty, h_stack, label, v_stack, Decorators};
 use floem::View;
@@ -61,8 +61,8 @@ impl TelemetryMetric {
 }
 
 pub fn telemetry_panel() -> impl View {
-    let conn_state = create_rw_signal(RobotConnState::Connected);
-    let metrics = create_rw_signal(TelemetryMetric::default_set());
+    let conn_state = RwSignal::new(RobotConnState::Connected);
+    let metrics = RwSignal::new(TelemetryMetric::default_set());
 
     v_stack((conn_header(conn_state), chart_grid(metrics))).style(|s| {
         s.flex_col()
