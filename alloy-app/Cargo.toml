@@ -18,6 +18,8 @@ alloy-git       = { path = "../alloy-git" }
 alloy-gradle    = { path = "../alloy-gradle" }
 alloy-telemetry = { path = "../alloy-telemetry" }
 alloy-proxy     = { path = "../alloy-proxy" }
+alloy-ui        = { path = "../alloy-ui" }
+floem           = { git = "https://github.com/lapce/floem", branch = "main" }
 tokio           = { workspace = true }
 futures         = { workspace = true }
 serde           = { workspace = true }
@@ -28,3 +30,8 @@ tracing-subscriber = { workspace = true }
 clap            = { workspace = true }
 dirs            = { workspace = true }
 parking_lot     = { workspace = true }
+
+[build-dependencies]
+# embed icon into the Windows .exe
+[target.'cfg(windows)'.build-dependencies]
+winresource = "0.1"

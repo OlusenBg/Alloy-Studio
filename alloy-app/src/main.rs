@@ -8,7 +8,6 @@ mod signal;
 fn main() -> anyhow::Result<()> {
     let args = cli::Cli::parse_args();
 
-    // Handle --version early so logging is not initialised unnecessarily.
     if args.version {
         println!("alloy {}", env!("CARGO_PKG_VERSION"));
         return Ok(());
@@ -16,13 +15,37 @@ fn main() -> anyhow::Result<()> {
 
     logging::init(&args.log_level);
 
-    let runtime = tokio::runtime::Builder::new_multi_thread()
-        .enable_all()
-        .thread_name("alloy-worker")
-        .build()?;
+    // Spin the entire backend (tokio + all subsystems) on a dedicated OS thread
+    // so the main thread stays free for the Floem GPU event loop, which requires it.
+    std::thread::Builder::new()
+        .name("alloy-backend".into())
+        .spawn(move || {
+            let runtime = tokio::runtime::Builder::new_multi_thread()
+                .enable_all()
+                .thread_name("alloy-worker")
+                .build()
+                .expect("failed to build tokio runtime");
 
-    runtime.block_on(async {
-        let application = app::App::new(args).await?;
-        application.run().await
-    })
+            if let Err(e) = runtime.block_on(async {
+                let application = app::App::new(args).await?;
+                application.run().await
+            }) {
+                tracing::error!(error = %e, "backend exited with error");
+            }
+        })?;
+
+    // Main thread: open the Floem window (must be on the main thread).
+    floem::Application::new()
+        .window(
+            |_| alloy_ui::shell::editor_shell(),
+            Some(
+                floem::window::WindowConfig::default()
+                    .title("Alloy Studio")
+                    .size(floem::kurbo::Size::new(1440.0, 900.0))
+                    .show_titlebar(false),
+            ),
+        )
+        .run();
+
+    Ok(())
 }
