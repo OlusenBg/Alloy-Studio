@@ -6,10 +6,10 @@
 //!
 //! Reference: kit/OutlinePanel.jsx.
 
-use floem::View;
 use floem::reactive::{RwSignal, SignalGet};
 use floem::style::CursorStyle;
-use floem::views::{Decorators, container, dyn_stack, empty, h_stack, label, scroll, v_stack};
+use floem::views::{container, dyn_stack, empty, h_stack, label, scroll, v_stack, Decorators};
+use floem::View;
 
 use crate::theme::*;
 
@@ -35,19 +35,19 @@ impl SymKind {
         // Single-char glyphs so we don't need codicon SVG plumbing here.
         // lapce-app should swap these for `svg(LapceIcons::SYMBOL_*)` calls.
         match self {
-            SymKind::Class       => "ⓒ",
-            SymKind::Interface   => "ⓘ",
-            SymKind::Enum        => "ⓔ",
-            SymKind::Method      => "ⓜ",
-            SymKind::Function    => "ƒ",
-            SymKind::Field       => "▪",
-            SymKind::Variable    => "ν",
-            SymKind::Constant    => "κ",
-            SymKind::Property    => "π",
+            SymKind::Class => "ⓒ",
+            SymKind::Interface => "ⓘ",
+            SymKind::Enum => "ⓔ",
+            SymKind::Method => "ⓜ",
+            SymKind::Function => "ƒ",
+            SymKind::Field => "▪",
+            SymKind::Variable => "ν",
+            SymKind::Constant => "κ",
+            SymKind::Property => "π",
             SymKind::Constructor => "ⓒ",
-            SymKind::Module      => "▤",
-            SymKind::Namespace   => "▦",
-            SymKind::Other       => "·",
+            SymKind::Module => "▤",
+            SymKind::Namespace => "▦",
+            SymKind::Other => "·",
         }
     }
     fn color(self) -> floem::peniko::Color {
@@ -64,25 +64,20 @@ impl SymKind {
 
 #[derive(Clone)]
 pub struct OutlineSymbol {
-    pub kind:        SymKind,
-    pub name:        String,
+    pub kind: SymKind,
+    pub name: String,
     pub return_type: String,
-    pub line:        u32,
-    pub depth:       u8,
-    pub active:      bool,
+    pub line: u32,
+    pub depth: u8,
+    pub active: bool,
 }
 
 pub fn outline_panel(
     file_name: RwSignal<String>,
-    symbols:   RwSignal<Vec<OutlineSymbol>>,
-    on_pick:   std::sync::Arc<dyn Fn(u32)>, // jump to line N in active editor
+    symbols: RwSignal<Vec<OutlineSymbol>>,
+    on_pick: std::sync::Arc<dyn Fn(u32)>, // jump to line N in active editor
 ) -> impl View {
-    v_stack((
-        header(file_name),
-        body(symbols, on_pick),
-        footer(symbols),
-    ))
-    .style(|s| {
+    v_stack((header(file_name), body(symbols, on_pick), footer(symbols))).style(|s| {
         s.flex_col()
             .width_pct(100.0)
             .height_pct(100.0)
@@ -114,10 +109,7 @@ fn header(file_name: RwSignal<String>) -> impl View {
     })
 }
 
-fn body(
-    symbols: RwSignal<Vec<OutlineSymbol>>,
-    on_pick: std::sync::Arc<dyn Fn(u32)>,
-) -> impl View {
+fn body(symbols: RwSignal<Vec<OutlineSymbol>>, on_pick: std::sync::Arc<dyn Fn(u32)>) -> impl View {
     scroll(
         dyn_stack(
             move || symbols.get().into_iter().enumerate().collect::<Vec<_>>(),
@@ -147,7 +139,11 @@ fn symbol_row(sym: OutlineSymbol, on_pick: std::sync::Arc<dyn Fn(u32)>) -> impl 
                     .height_pct(80.0)
                     .background(ALLOY_ORANGE)
                     .border_radius(R_2);
-                if active { s } else { s.hide() }
+                if active {
+                    s
+                } else {
+                    s.hide()
+                }
             }),
             // icon
             label(move || glyph.to_string())
@@ -159,10 +155,13 @@ fn symbol_row(sym: OutlineSymbol, on_pick: std::sync::Arc<dyn Fn(u32)>) -> impl 
                     move || n.clone()
                 })
                 .style(move |s| {
-                    let bold = matches!(sym.kind, SymKind::Class | SymKind::Interface | SymKind::Enum);
-                    s.color(FG_1).font_size(T_SMALL).apply_if(bold, |s| {
-                        s.font_weight(floem::text::Weight::BOLD)
-                    })
+                    let bold = matches!(
+                        sym.kind,
+                        SymKind::Class | SymKind::Interface | SymKind::Enum
+                    );
+                    s.color(FG_1)
+                        .font_size(T_SMALL)
+                        .apply_if(bold, |s| s.font_weight(floem::text::Weight::BOLD))
                 }),
                 label({
                     let r = sym.return_type.clone();
@@ -173,7 +172,9 @@ fn symbol_row(sym: OutlineSymbol, on_pick: std::sync::Arc<dyn Fn(u32)>) -> impl 
             .style(|s| s.flex_grow(1.0).min_width(0.0).items_center()),
             // line number
             label(move || line_no.to_string()).style(|s| {
-                s.color(FG_4).font_size(T_MICRO).font_family("monospace".to_string())
+                s.color(FG_4)
+                    .font_size(T_MICRO)
+                    .font_family("monospace".to_string())
             }),
         ))
         .style(|s| s.items_center().width_pct(100.0)),
@@ -200,11 +201,24 @@ fn symbol_row(sym: OutlineSymbol, on_pick: std::sync::Arc<dyn Fn(u32)>) -> impl 
 fn footer(symbols: RwSignal<Vec<OutlineSymbol>>) -> impl View {
     label(move || {
         let v = symbols.get();
-        let classes = v.iter().filter(|s| matches!(s.kind, SymKind::Class | SymKind::Interface | SymKind::Enum)).count();
-        let methods = v.iter().filter(|s| matches!(s.kind, SymKind::Method | SymKind::Function | SymKind::Constructor)).count();
-        format!("Symbols provided by LSP · {classes} {} · {methods} {}",
+        let classes = v
+            .iter()
+            .filter(|s| matches!(s.kind, SymKind::Class | SymKind::Interface | SymKind::Enum))
+            .count();
+        let methods = v
+            .iter()
+            .filter(|s| {
+                matches!(
+                    s.kind,
+                    SymKind::Method | SymKind::Function | SymKind::Constructor
+                )
+            })
+            .count();
+        format!(
+            "Symbols provided by LSP · {classes} {} · {methods} {}",
             if classes == 1 { "class" } else { "classes" },
-            if methods == 1 { "method" } else { "methods" })
+            if methods == 1 { "method" } else { "methods" }
+        )
     })
     .style(|s| {
         s.padding_horiz(14.0)

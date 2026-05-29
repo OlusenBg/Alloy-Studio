@@ -2,30 +2,45 @@
 //!
 //! Reference: kit/HardwareMapper.jsx.
 
-use floem::View;
-use floem::reactive::{RwSignal, SignalGet, create_rw_signal};
+use floem::reactive::{create_rw_signal, RwSignal, SignalGet};
 use floem::style::CursorStyle;
-use floem::views::{Decorators, container, dyn_stack, empty, h_stack, label, scroll, v_stack};
+use floem::views::{container, dyn_stack, empty, h_stack, label, scroll, v_stack, Decorators};
+use floem::View;
 
 use crate::theme::*;
 
 #[derive(Clone)]
 pub struct Port {
-    pub idx:  u8,
+    pub idx: u8,
     pub name: Option<String>,
 }
 
 pub fn hardware_mapper_panel() -> impl View {
     let motors = create_rw_signal(vec![
-        Port { idx: 0, name: Some("driveL".to_string()) },
-        Port { idx: 1, name: Some("driveR".to_string()) },
-        Port { idx: 2, name: Some("armMotor".to_string()) },
+        Port {
+            idx: 0,
+            name: Some("driveL".to_string()),
+        },
+        Port {
+            idx: 1,
+            name: Some("driveR".to_string()),
+        },
+        Port {
+            idx: 2,
+            name: Some("armMotor".to_string()),
+        },
         Port { idx: 3, name: None },
     ]);
 
     let servos = create_rw_signal(vec![
-        Port { idx: 0, name: Some("claw".to_string()) },
-        Port { idx: 1, name: Some("wrist".to_string()) },
+        Port {
+            idx: 0,
+            name: Some("claw".to_string()),
+        },
+        Port {
+            idx: 1,
+            name: Some("wrist".to_string()),
+        },
         Port { idx: 2, name: None },
         Port { idx: 3, name: None },
         Port { idx: 4, name: None },
@@ -54,10 +69,7 @@ pub fn hardware_mapper_panel() -> impl View {
     })
 }
 
-fn motors_hub_block(
-    ports:      RwSignal<Vec<Port>>,
-    status_msg: RwSignal<String>,
-) -> impl View {
+fn motors_hub_block(ports: RwSignal<Vec<Port>>, status_msg: RwSignal<String>) -> impl View {
     v_stack((
         label(|| "MOTORS".to_string()).style(|s| {
             s.color(ALLOY_ORANGE)
@@ -88,10 +100,7 @@ fn motors_hub_block(
     })
 }
 
-fn servos_hub_block(
-    ports:      RwSignal<Vec<Port>>,
-    status_msg: RwSignal<String>,
-) -> impl View {
+fn servos_hub_block(ports: RwSignal<Vec<Port>>, status_msg: RwSignal<String>) -> impl View {
     v_stack((
         label(|| "SERVOS".to_string()).style(|s| {
             s.color(STATUS_INFO)
@@ -122,30 +131,24 @@ fn servos_hub_block(
     })
 }
 
-fn port_chip(
-    port:       Port,
-    ports:      RwSignal<Vec<Port>>,
-    status_msg: RwSignal<String>,
-) -> impl View {
-    let idx         = port.idx;
+fn port_chip(port: Port, ports: RwSignal<Vec<Port>>, status_msg: RwSignal<String>) -> impl View {
+    let idx = port.idx;
     let is_assigned = port.name.is_some();
-    let chip_text   = match &port.name {
+    let chip_text = match &port.name {
         Some(n) => format!("[{}] {}", idx, n),
-        None    => format!("[{}] empty", idx),
+        None => format!("[{}] empty", idx),
     };
 
-    container(
-        label(move || chip_text.clone()).style(move |s| {
-            let color = if is_assigned {
-                floem::peniko::Color::WHITE
-            } else {
-                FG_3
-            };
-            s.color(color)
-                .font_size(T_TINY)
-                .font_family("monospace".to_string())
-        }),
-    )
+    container(label(move || chip_text.clone()).style(move |s| {
+        let color = if is_assigned {
+            floem::peniko::Color::WHITE
+        } else {
+            FG_3
+        };
+        s.color(color)
+            .font_size(T_TINY)
+            .font_family("monospace".to_string())
+    }))
     .on_click_stop(move |_| {
         ports.update(|v| {
             if let Some(p) = v.iter_mut().find(|p| p.idx == idx) {
@@ -173,8 +176,8 @@ fn port_chip(
 }
 
 fn toolbar(
-    motors:     RwSignal<Vec<Port>>,
-    servos:     RwSignal<Vec<Port>>,
+    motors: RwSignal<Vec<Port>>,
+    servos: RwSignal<Vec<Port>>,
     status_msg: RwSignal<String>,
 ) -> impl View {
     h_stack((
@@ -248,17 +251,16 @@ fn toolbar(
 }
 
 fn status_bar(status_msg: RwSignal<String>) -> impl View {
-    container(
-        label(move || status_msg.get()).style(|s| s.color(FG_2).font_size(T_TINY)),
+    container(label(move || status_msg.get()).style(|s| s.color(FG_2).font_size(T_TINY))).style(
+        |s| {
+            s.height(UI_STATUS_HEIGHT)
+                .padding_horiz(14.0)
+                .items_center()
+                .border_top(1.0)
+                .border_color(BG_EDGE)
+                .background(BG_SURFACE)
+                .flex_shrink(0.0)
+                .width_pct(100.0)
+        },
     )
-    .style(|s| {
-        s.height(UI_STATUS_HEIGHT)
-            .padding_horiz(14.0)
-            .items_center()
-            .border_top(1.0)
-            .border_color(BG_EDGE)
-            .background(BG_SURFACE)
-            .flex_shrink(0.0)
-            .width_pct(100.0)
-    })
 }

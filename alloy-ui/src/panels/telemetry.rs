@@ -2,10 +2,10 @@
 //!
 //! Reference: kit/TelemetryPanel.jsx.
 
-use floem::View;
-use floem::reactive::{RwSignal, SignalGet, create_rw_signal};
+use floem::reactive::{create_rw_signal, RwSignal, SignalGet};
 use floem::style::CursorStyle;
-use floem::views::{Decorators, container, dyn_stack, empty, h_stack, label, scroll, v_stack};
+use floem::views::{container, dyn_stack, empty, h_stack, label, scroll, v_stack, Decorators};
+use floem::View;
 
 use crate::theme::*;
 
@@ -17,33 +17,53 @@ pub enum RobotConnState {
 
 #[derive(Clone)]
 pub struct TelemetryMetric {
-    pub key:   String,
+    pub key: String,
     pub value: f64,
-    pub unit:  String,
+    pub unit: String,
 }
 
 impl TelemetryMetric {
     pub fn default_set() -> Vec<TelemetryMetric> {
         vec![
-            TelemetryMetric { key: "leftPower".to_string(),    value: 0.72,  unit: "%".to_string() },
-            TelemetryMetric { key: "rightPower".to_string(),   value: 0.68,  unit: "%".to_string() },
-            TelemetryMetric { key: "heading".to_string(),       value: 42.3,  unit: "°".to_string() },
-            TelemetryMetric { key: "armAngle".to_string(),      value: 118.0, unit: "°".to_string() },
-            TelemetryMetric { key: "batteryVolt".to_string(),   value: 13.1,  unit: "V".to_string() },
-            TelemetryMetric { key: "loopTime".to_string(),      value: 8.4,   unit: "ms".to_string() },
+            TelemetryMetric {
+                key: "leftPower".to_string(),
+                value: 0.72,
+                unit: "%".to_string(),
+            },
+            TelemetryMetric {
+                key: "rightPower".to_string(),
+                value: 0.68,
+                unit: "%".to_string(),
+            },
+            TelemetryMetric {
+                key: "heading".to_string(),
+                value: 42.3,
+                unit: "°".to_string(),
+            },
+            TelemetryMetric {
+                key: "armAngle".to_string(),
+                value: 118.0,
+                unit: "°".to_string(),
+            },
+            TelemetryMetric {
+                key: "batteryVolt".to_string(),
+                value: 13.1,
+                unit: "V".to_string(),
+            },
+            TelemetryMetric {
+                key: "loopTime".to_string(),
+                value: 8.4,
+                unit: "ms".to_string(),
+            },
         ]
     }
 }
 
 pub fn telemetry_panel() -> impl View {
     let conn_state = create_rw_signal(RobotConnState::Connected);
-    let metrics    = create_rw_signal(TelemetryMetric::default_set());
+    let metrics = create_rw_signal(TelemetryMetric::default_set());
 
-    v_stack((
-        conn_header(conn_state),
-        chart_grid(metrics),
-    ))
-    .style(|s| {
+    v_stack((conn_header(conn_state), chart_grid(metrics))).style(|s| {
         s.flex_col()
             .width_pct(100.0)
             .height_pct(100.0)
@@ -75,7 +95,12 @@ fn conn_header(conn_state: RwSignal<RobotConnState>) -> impl View {
                 "Robot Disconnected".to_string()
             }
         })
-        .style(|s| s.color(FG_2).font_size(T_SMALL).flex_grow(0.0).margin_right(12.0)),
+        .style(|s| {
+            s.color(FG_2)
+                .font_size(T_SMALL)
+                .flex_grow(0.0)
+                .margin_right(12.0)
+        }),
         // Address / rate
         label(|| "UDP :9988 · 5 Hz".to_string()).style(|s| {
             s.color(FG_3)
@@ -129,9 +154,9 @@ fn chart_grid(metrics: RwSignal<Vec<TelemetryMetric>>) -> impl View {
 }
 
 fn chart_card(metric: TelemetryMetric) -> impl View {
-    let key   = metric.key.clone();
+    let key = metric.key.clone();
     let value = metric.value;
-    let unit  = metric.unit.clone();
+    let unit = metric.unit.clone();
 
     v_stack((
         // Header row: key + value + unit
@@ -183,23 +208,11 @@ fn chart_area() -> impl View {
     container(
         v_stack((
             // Three horizontal grid lines dividing the 60px chart into 4 bands
-            container(empty()).style(|s| {
-                s.width_pct(100.0)
-                    .height(1.0)
-                    .background(BG_GRID)
-            }),
+            container(empty()).style(|s| s.width_pct(100.0).height(1.0).background(BG_GRID)),
             container(empty()).style(|s| s.flex_grow(1.0f32)),
-            container(empty()).style(|s| {
-                s.width_pct(100.0)
-                    .height(1.0)
-                    .background(BG_GRID)
-            }),
+            container(empty()).style(|s| s.width_pct(100.0).height(1.0).background(BG_GRID)),
             container(empty()).style(|s| s.flex_grow(1.0f32)),
-            container(empty()).style(|s| {
-                s.width_pct(100.0)
-                    .height(1.0)
-                    .background(BG_GRID)
-            }),
+            container(empty()).style(|s| s.width_pct(100.0).height(1.0).background(BG_GRID)),
             container(empty()).style(|s| s.flex_grow(1.0f32)),
             // Orange tint fill at the bottom
             container(empty()).style(|s| {

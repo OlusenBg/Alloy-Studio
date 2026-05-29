@@ -9,12 +9,12 @@
 
 use std::sync::Arc;
 
-use floem::View;
 use floem::reactive::{RwSignal, SignalGet, SignalUpdate};
 use floem::style::CursorStyle;
 use floem::views::{
-    Decorators, container, dyn_stack, empty, h_stack, label, scroll, text_input, v_stack,
+    container, dyn_stack, empty, h_stack, label, scroll, text_input, v_stack, Decorators,
 };
+use floem::View;
 
 use crate::theme::*;
 
@@ -29,25 +29,25 @@ pub enum PaletteTone {
 #[derive(Clone)]
 pub struct PaletteItem {
     pub group: String,
-    pub icon:  &'static str,   // codicon glyph fallback char or name
+    pub icon: &'static str, // codicon glyph fallback char or name
     pub label: String,
-    pub sub:   String,
-    pub kbd:   Option<String>,
-    pub tone:  PaletteTone,
+    pub sub: String,
+    pub kbd: Option<String>,
+    pub tone: PaletteTone,
     pub on_run: Arc<dyn Fn()>,
 }
 
 /// Render the palette. `open` controls visibility; `query` is bound to the
 /// search input; `items` is the (already-filtered, already-grouped) list.
 pub fn alloy_command_palette(
-    open:     RwSignal<bool>,
-    query:    RwSignal<String>,
-    items:    RwSignal<Vec<PaletteItem>>,
+    open: RwSignal<bool>,
+    query: RwSignal<String>,
+    items: RwSignal<Vec<PaletteItem>>,
     selected: RwSignal<usize>,
 ) -> impl View {
     let backdrop = container(
         container(palette_card(query, items, selected, open))
-            .style(|s| s.width(640.0).items_center())
+            .style(|s| s.width(640.0).items_center()),
     )
     .on_click_stop(move |_| open.set(false))
     .style(move |s| {
@@ -59,17 +59,21 @@ pub fn alloy_command_palette(
             .justify_center()
             .padding_top(UI_HEADER_HEIGHT)
             .z_index(200);
-        if open.get() { s } else { s.hide() }
+        if open.get() {
+            s
+        } else {
+            s.hide()
+        }
     });
 
     backdrop
 }
 
 fn palette_card(
-    query:    RwSignal<String>,
-    items:    RwSignal<Vec<PaletteItem>>,
+    query: RwSignal<String>,
+    items: RwSignal<Vec<PaletteItem>>,
     selected: RwSignal<usize>,
-    open:     RwSignal<bool>,
+    open: RwSignal<bool>,
 ) -> impl View {
     v_stack((
         search_row(query),
@@ -121,9 +125,9 @@ fn search_row(query: RwSignal<String>) -> impl View {
 }
 
 fn results_list(
-    items:    RwSignal<Vec<PaletteItem>>,
+    items: RwSignal<Vec<PaletteItem>>,
     selected: RwSignal<usize>,
-    open:     RwSignal<bool>,
+    open: RwSignal<bool>,
 ) -> impl View {
     scroll(
         dyn_stack(
@@ -144,16 +148,14 @@ fn results_list(
             },
             |(k, _)| *k,
             move |(_, row)| match row {
-                PaletteRow::Header(name) => v_stack((
-                    label(move || name.clone()).style(|s| {
-                        s.padding_horiz(16.0)
-                            .padding_top(10.0)
-                            .padding_bottom(4.0)
-                            .color(FG_3)
-                            .font_size(T_MICRO)
-                            .font_weight(floem::text::Weight::BOLD)
-                    }),
-                ))
+                PaletteRow::Header(name) => v_stack((label(move || name.clone()).style(|s| {
+                    s.padding_horiz(16.0)
+                        .padding_top(10.0)
+                        .padding_bottom(4.0)
+                        .color(FG_3)
+                        .font_size(T_MICRO)
+                        .font_weight(floem::text::Weight::BOLD)
+                }),))
                 .into_any(),
                 PaletteRow::Item(i, it) => palette_item_row(i, it, selected, open).into_any(),
             },
@@ -174,10 +176,10 @@ enum PaletteRow {
 }
 
 fn palette_item_row(
-    idx:      usize,
-    it:       PaletteItem,
+    idx: usize,
+    it: PaletteItem,
     selected: RwSignal<usize>,
-    open:     RwSignal<bool>,
+    open: RwSignal<bool>,
 ) -> impl View {
     let label_text = it.label.clone();
     let sub_text = it.sub.clone();
@@ -185,7 +187,7 @@ fn palette_item_row(
     let on_run = it.on_run.clone();
     let tone_color = match it.tone {
         PaletteTone::Success => STATUS_SUCCESS,
-        PaletteTone::Info    => STATUS_INFO,
+        PaletteTone::Info => STATUS_INFO,
         PaletteTone::Warning => STATUS_WARNING,
         PaletteTone::Default => FG_3,
     };
@@ -201,20 +203,20 @@ fn palette_item_row(
                 .background(ALLOY_ORANGE)
                 .border_radius(R_2)
                 .margin_left(0.0);
-            if selected.get() == idx { s } else { s.hide() }
+            if selected.get() == idx {
+                s
+            } else {
+                s.hide()
+            }
         }),
         // icon
-        label(move || icon_glyph.to_string()).style(move |s| {
-            s.color(tone_color).font_size(T_MD).margin_right(10.0)
-        }),
+        label(move || icon_glyph.to_string())
+            .style(move |s| s.color(tone_color).font_size(T_MD).margin_right(10.0)),
         // text
         v_stack((
             label(move || label_text.clone()).style(|s| s.color(FG_1).font_size(T_BASE)),
-            label(move || sub_text.clone()).style(|s| {
-                s.color(FG_3)
-                    .font_size(T_TINY)
-                    .text_ellipsis()
-            }),
+            label(move || sub_text.clone())
+                .style(|s| s.color(FG_3).font_size(T_TINY).text_ellipsis()),
         ))
         .style(|s| s.flex_grow(1.0).min_width(0.0).gap(2.0)),
         // kbd
@@ -229,7 +231,11 @@ fn palette_item_row(
         }))
         .style(move |s| {
             let has = it.kbd.is_some();
-            if has { s } else { s.hide() }
+            if has {
+                s
+            } else {
+                s.hide()
+            }
         }),
     ))
     .on_event_stop(floem::event::EventListener::PointerEnter, move |_| {

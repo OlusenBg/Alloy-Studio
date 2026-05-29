@@ -1,14 +1,14 @@
 //! Welcome / home screen shown before a project is opened.
 
-use std::sync::Arc;
-use floem::View;
-use floem::reactive::{RwSignal, SignalGet, create_rw_signal};
-use floem::style::CursorStyle;
-use floem::views::{Decorators, container, empty, h_stack, label, scroll, v_stack, img};
 use crate::theme::*;
+use floem::reactive::{create_rw_signal, RwSignal, SignalGet};
+use floem::style::CursorStyle;
+use floem::views::{container, empty, h_stack, img, label, scroll, v_stack, Decorators};
+use floem::View;
+use std::sync::Arc;
 
 static ALLOY_LOGO: &[u8] = include_bytes!("../extra/images/logo.png");
-static FTC_LOGO:   &[u8] = include_bytes!("../extra/images/ftc-logo.png");
+static FTC_LOGO: &[u8] = include_bytes!("../extra/images/ftc-logo.png");
 
 #[derive(Clone)]
 pub struct RecentProject {
@@ -19,25 +19,20 @@ pub struct RecentProject {
 
 #[derive(Clone)]
 pub struct WelcomeHandlers {
-    pub on_open:      Arc<dyn Fn()>,
-    pub on_clone:     Arc<dyn Fn()>,
-    pub on_new:       Arc<dyn Fn()>,
+    pub on_open: Arc<dyn Fn()>,
+    pub on_clone: Arc<dyn Fn()>,
+    pub on_new: Arc<dyn Fn()>,
     pub on_open_recent: Arc<dyn Fn(String)>,
 }
 
-pub fn welcome_screen(
-    recent: RwSignal<Vec<RecentProject>>,
-    h: WelcomeHandlers,
-) -> impl View {
+pub fn welcome_screen(recent: RwSignal<Vec<RecentProject>>, h: WelcomeHandlers) -> impl View {
     v_stack((
         header_bar(),
         h_stack((
             left_column(recent, h.on_open_recent.clone()),
             right_column(h),
         ))
-        .style(|s| {
-            s.flex_grow(1.0).gap(0.0).width_pct(100.0).height_pct(100.0)
-        }),
+        .style(|s| s.flex_grow(1.0).gap(0.0).width_pct(100.0).height_pct(100.0)),
         footer(),
     ))
     .style(|s| {
@@ -54,13 +49,19 @@ fn header_bar() -> impl View {
             img(|| ALLOY_LOGO.to_vec()).style(|s| s.width(32.0).height(32.0).margin_right(12.0)),
             v_stack((
                 label(|| "ALLOY EDITOR".to_string()).style(|s| {
-                    s.color(FG_1).font_size(T_2XL).font_weight(floem::text::Weight::BOLD)
+                    s.color(FG_1)
+                        .font_size(T_2XL)
+                        .font_weight(floem::text::Weight::BOLD)
                 }),
                 label(|| "FOR FIRST TECH CHALLENGE".to_string()).style(|s| {
-                    s.color(ALLOY_ORANGE).font_size(T_MICRO).font_weight(floem::text::Weight::BOLD)
+                    s.color(ALLOY_ORANGE)
+                        .font_size(T_MICRO)
+                        .font_weight(floem::text::Weight::BOLD)
                 }),
-            )).style(|s| s.gap(2.0)),
-        )).style(|s| s.items_center()),
+            ))
+            .style(|s| s.gap(2.0)),
+        ))
+        .style(|s| s.items_center()),
         container(empty()).style(|s| s.flex_grow(1.0f32)),
         img(|| FTC_LOGO.to_vec()).style(|s| s.width(48.0).height(48.0)),
     ))
@@ -75,13 +76,12 @@ fn header_bar() -> impl View {
     })
 }
 
-fn left_column(
-    recent: RwSignal<Vec<RecentProject>>,
-    on_open: Arc<dyn Fn(String)>,
-) -> impl View {
+fn left_column(recent: RwSignal<Vec<RecentProject>>, on_open: Arc<dyn Fn(String)>) -> impl View {
     v_stack((
         label(|| "RECENT PROJECTS".to_string()).style(|s| {
-            s.color(FG_3).font_size(T_MICRO).font_weight(floem::text::Weight::BOLD)
+            s.color(FG_3)
+                .font_size(T_MICRO)
+                .font_weight(floem::text::Weight::BOLD)
                 .margin_bottom(8.0)
         }),
         scroll(
@@ -112,15 +112,18 @@ fn recent_row(p: RecentProject, on_open: Arc<dyn Fn(String)>) -> impl View {
         h_stack((
             v_stack((
                 label(move || name.clone()).style(|s| {
-                    s.color(FG_1).font_size(T_SMALL).font_weight(floem::text::Weight::SEMIBOLD)
+                    s.color(FG_1)
+                        .font_size(T_SMALL)
+                        .font_weight(floem::text::Weight::SEMIBOLD)
                 }),
                 label(move || path.clone()).style(|s| {
-                    s.color(FG_3).font_size(T_MICRO).font_family("monospace".to_string())
+                    s.color(FG_3)
+                        .font_size(T_MICRO)
+                        .font_family("monospace".to_string())
                 }),
-            )).style(|s| s.flex_grow(1.0).min_width(0.0).gap(3.0)),
-            label(move || when.clone()).style(|s| {
-                s.color(FG_4).font_size(T_MICRO)
-            }),
+            ))
+            .style(|s| s.flex_grow(1.0).min_width(0.0).gap(3.0)),
+            label(move || when.clone()).style(|s| s.color(FG_4).font_size(T_MICRO)),
         ))
         .style(|s| s.items_center().width_pct(100.0)),
     )
@@ -139,7 +142,10 @@ fn recent_row(p: RecentProject, on_open: Arc<dyn Fn(String)>) -> impl View {
 fn right_column(h: WelcomeHandlers) -> impl View {
     v_stack((
         label(|| "GET STARTED".to_string()).style(|s| {
-            s.color(FG_3).font_size(T_MICRO).font_weight(floem::text::Weight::BOLD).margin_bottom(12.0)
+            s.color(FG_3)
+                .font_size(T_MICRO)
+                .font_weight(floem::text::Weight::BOLD)
+                .margin_bottom(12.0)
         }),
         action_btn("Open FTC Project...", true, h.on_open.clone()),
         action_btn("Clone from GitHub", false, h.on_clone.clone()),
@@ -148,8 +154,11 @@ fn right_column(h: WelcomeHandlers) -> impl View {
             std::sync::Arc::new(|| {})
         }),
         label(|| "FTC RESOURCES".to_string()).style(|s| {
-            s.color(FG_3).font_size(T_MICRO).font_weight(floem::text::Weight::BOLD)
-                .margin_top(24.0).margin_bottom(12.0)
+            s.color(FG_3)
+                .font_size(T_MICRO)
+                .font_weight(floem::text::Weight::BOLD)
+                .margin_top(24.0)
+                .margin_bottom(12.0)
         }),
         resource_link("SDK Documentation"),
         resource_link("Current Game Manual"),
@@ -168,7 +177,11 @@ fn right_column(h: WelcomeHandlers) -> impl View {
 fn action_btn(text: &'static str, primary: bool, on_click: Arc<dyn Fn()>) -> impl View {
     container(label(move || text.to_string()).style(move |s| {
         let s = s.font_size(T_SMALL);
-        if primary { s.color(FG_1).font_weight(floem::text::Weight::SEMIBOLD) } else { s.color(FG_2) }
+        if primary {
+            s.color(FG_1).font_weight(floem::text::Weight::SEMIBOLD)
+        } else {
+            s.color(FG_2)
+        }
     }))
     .on_click_stop(move |_| (on_click)())
     .style(move |s| {
@@ -197,7 +210,8 @@ fn action_btn(text: &'static str, primary: bool, on_click: Arc<dyn Fn()>) -> imp
 
 fn resource_link(text: &'static str) -> impl View {
     h_stack((
-        label(|| "->".to_string()).style(|s| s.color(ALLOY_ORANGE).font_size(T_SMALL).margin_right(10.0)),
+        label(|| "->".to_string())
+            .style(|s| s.color(ALLOY_ORANGE).font_size(T_SMALL).margin_right(10.0)),
         label(move || text.to_string()).style(|s| s.color(FG_2).font_size(T_SMALL)),
     ))
     .style(|s| {
@@ -209,14 +223,13 @@ fn resource_link(text: &'static str) -> impl View {
 }
 
 fn footer() -> impl View {
-    label(|| "Alloy Editor - Built for FTC Robotics".to_string())
-        .style(|s| {
-            s.color(FG_4)
-                .font_size(T_MICRO)
-                .width_pct(100.0)
-                .padding_vert(8.0)
-                .padding_horiz(32.0)
-                .border_top(1.0)
-                .border_color(BG_EDGE)
-        })
+    label(|| "Alloy Editor - Built for FTC Robotics".to_string()).style(|s| {
+        s.color(FG_4)
+            .font_size(T_MICRO)
+            .width_pct(100.0)
+            .padding_vert(8.0)
+            .padding_horiz(32.0)
+            .border_top(1.0)
+            .border_color(BG_EDGE)
+    })
 }

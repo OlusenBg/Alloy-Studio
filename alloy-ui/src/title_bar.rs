@@ -14,10 +14,10 @@
 
 use std::sync::Arc;
 
-use floem::View;
 use floem::reactive::{RwSignal, SignalGet};
 use floem::style::CursorStyle;
-use floem::views::{Decorators, container, empty, h_stack, label};
+use floem::views::{container, empty, h_stack, label, Decorators};
+use floem::View;
 
 use crate::theme::*;
 
@@ -25,20 +25,20 @@ static ALLOY_LOGO: &[u8] = include_bytes!("../extra/images/logo.png");
 
 #[derive(Clone)]
 pub struct TitleBarHandlers {
-    pub on_home:    Arc<dyn Fn()>,
+    pub on_home: Arc<dyn Fn()>,
     pub on_palette: Arc<dyn Fn()>,
     pub on_settings: Arc<dyn Fn()>,
-    pub on_run:     Arc<dyn Fn()>,
+    pub on_run: Arc<dyn Fn()>,
 }
 
 pub fn alloy_title_bar(
     project_name: RwSignal<String>,
-    team:         RwSignal<String>,
-    branch:       RwSignal<String>,
-    has_update:   RwSignal<bool>,
+    team: RwSignal<String>,
+    branch: RwSignal<String>,
+    has_update: RwSignal<bool>,
     workspace_open: RwSignal<bool>,
-    show_run:     RwSignal<bool>,
-    h:            TitleBarHandlers,
+    show_run: RwSignal<bool>,
+    h: TitleBarHandlers,
 ) -> impl View {
     h_stack((
         traffic_lights(),
@@ -46,7 +46,12 @@ pub fn alloy_title_bar(
         spacer(),
         command_pill(project_name, team, branch, h.on_palette.clone()),
         spacer(),
-        right_cluster(has_update, show_run, h.on_run.clone(), h.on_settings.clone()),
+        right_cluster(
+            has_update,
+            show_run,
+            h.on_run.clone(),
+            h.on_settings.clone(),
+        ),
     ))
     .style(|s| {
         s.width_pct(100.0)
@@ -86,20 +91,25 @@ fn traffic_lights() -> impl View {
 #[cfg(target_os = "macos")]
 fn dot(c: floem::peniko::Color) -> impl View {
     container(empty()).style(move |s| {
-        s.width(12.0).height(12.0).border_radius(R_FULL).background(c)
+        s.width(12.0)
+            .height(12.0)
+            .border_radius(R_FULL)
+            .background(c)
     })
 }
 
-fn logo_and_home(
-    workspace_open: RwSignal<bool>,
-    on_home: Arc<dyn Fn()>,
-) -> impl View {
+fn logo_and_home(workspace_open: RwSignal<bool>, on_home: Arc<dyn Fn()>) -> impl View {
     h_stack((
-        floem::views::img(|| ALLOY_LOGO.to_vec())
-            .style(|s| s.width(18.0).height(18.0)),
-        container(home_chevron(on_home)).style(move |s| {
-            if workspace_open.get() { s } else { s.hide() }
-        }),
+        floem::views::img(|| ALLOY_LOGO.to_vec()).style(|s| s.width(18.0).height(18.0)),
+        container(home_chevron(on_home)).style(
+            move |s| {
+                if workspace_open.get() {
+                    s
+                } else {
+                    s.hide()
+                }
+            },
+        ),
     ))
     .style(|s| s.items_center().gap(8.0))
 }
@@ -107,10 +117,8 @@ fn logo_and_home(
 fn home_chevron(on_home: Arc<dyn Fn()>) -> impl View {
     container(
         h_stack((
-            label(|| "‹".to_string())
-                .style(|s| s.color(FG_2).font_size(T_SMALL).margin_right(4.0)),
-            label(|| "Home".to_string())
-                .style(|s| s.color(FG_2).font_size(T_TINY)),
+            label(|| "‹".to_string()).style(|s| s.color(FG_2).font_size(T_SMALL).margin_right(4.0)),
+            label(|| "Home".to_string()).style(|s| s.color(FG_2).font_size(T_TINY)),
         ))
         .style(|s| s.items_center()),
     )
@@ -127,9 +135,9 @@ fn home_chevron(on_home: Arc<dyn Fn()>) -> impl View {
 
 fn command_pill(
     project_name: RwSignal<String>,
-    team:         RwSignal<String>,
-    branch:       RwSignal<String>,
-    on_palette:   Arc<dyn Fn()>,
+    team: RwSignal<String>,
+    branch: RwSignal<String>,
+    on_palette: Arc<dyn Fn()>,
 ) -> impl View {
     container(
         h_stack((
@@ -137,8 +145,11 @@ fn command_pill(
             // for the codicon; lapce-app will replace with `svg(LapceIcons::FOLDER)`
             label(|| "▸".to_string())
                 .style(|s| s.color(ALLOY_ORANGE).font_size(T_SMALL).margin_right(2.0)),
-            label(move || project_name.get())
-                .style(|s| s.color(FG_1).font_size(T_SMALL).font_weight(floem::text::Weight::MEDIUM)),
+            label(move || project_name.get()).style(|s| {
+                s.color(FG_1)
+                    .font_size(T_SMALL)
+                    .font_weight(floem::text::Weight::MEDIUM)
+            }),
             label(|| "·".to_string()).style(|s| s.color(FG_4).font_size(T_SMALL).margin_horiz(6.0)),
             label(move || team.get()).style(|s| s.color(FG_3).font_size(T_SMALL)),
             label(|| "·".to_string()).style(|s| s.color(FG_4).font_size(T_SMALL).margin_horiz(6.0)),
@@ -174,15 +185,21 @@ fn command_pill(
 }
 
 fn right_cluster(
-    has_update:  RwSignal<bool>,
-    show_run:    RwSignal<bool>,
-    on_run:      Arc<dyn Fn()>,
+    has_update: RwSignal<bool>,
+    show_run: RwSignal<bool>,
+    on_run: Arc<dyn Fn()>,
     on_settings: Arc<dyn Fn()>,
 ) -> impl View {
     h_stack((
-        container(run_button(on_run.clone())).style(move |s| {
-            if show_run.get() { s } else { s.hide() }
-        }),
+        container(run_button(on_run.clone())).style(
+            move |s| {
+                if show_run.get() {
+                    s
+                } else {
+                    s.hide()
+                }
+            },
+        ),
         title_icon_button("⚙", "Settings", on_settings.clone()),
         update_dot(has_update),
     ))
@@ -193,8 +210,11 @@ fn run_button(on_run: Arc<dyn Fn()>) -> impl View {
     container(
         h_stack((
             label(|| "▶".to_string()).style(|s| s.color(FG_1).font_size(T_SMALL).margin_right(6.0)),
-            label(|| "Deploy".to_string())
-                .style(|s| s.color(FG_1).font_size(T_TINY).font_weight(floem::text::Weight::SEMIBOLD)),
+            label(|| "Deploy".to_string()).style(|s| {
+                s.color(FG_1)
+                    .font_size(T_TINY)
+                    .font_weight(floem::text::Weight::SEMIBOLD)
+            }),
         ))
         .style(|s| s.items_center()),
     )
@@ -243,6 +263,10 @@ fn update_dot(has_update: RwSignal<bool>) -> impl View {
             .margin_right(6.0)
             .box_shadow_blur(6.0)
             .box_shadow_color(ALLOY_ORANGE_GLOW);
-        if has_update.get() { s } else { s.hide() }
+        if has_update.get() {
+            s
+        } else {
+            s.hide()
+        }
     })
 }

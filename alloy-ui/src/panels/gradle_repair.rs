@@ -2,10 +2,10 @@
 //!
 //! Reference: kit/GradleRepair.jsx.
 
-use floem::View;
-use floem::reactive::{RwSignal, SignalGet, create_rw_signal};
+use floem::reactive::{create_rw_signal, RwSignal, SignalGet};
 use floem::style::CursorStyle;
-use floem::views::{Decorators, container, dyn_stack, empty, h_stack, label, scroll, v_stack};
+use floem::views::{container, dyn_stack, empty, h_stack, label, scroll, v_stack, Decorators};
+use floem::View;
 
 use crate::theme::*;
 
@@ -31,15 +31,42 @@ pub struct LogLine {
 }
 
 const LOG_FAILED: &[LogLine] = &[
-    LogLine { tone: LogTone::Info, text: "> Configure project :TeamCode" },
-    LogLine { tone: LogTone::Info, text: "> Task :TeamCode:compileDebugJavaWithJavac" },
-    LogLine { tone: LogTone::Info, text: "Resolving dependencies for configuration ':TeamCode:debugCompileClasspath'" },
-    LogLine { tone: LogTone::Err,  text: "FAILURE: Build failed with an exception." },
-    LogLine { tone: LogTone::Out,  text: "* What went wrong:" },
-    LogLine { tone: LogTone::Out,  text: "Could not resolve all files for configuration ':TeamCode:debugCompileClasspath'." },
-    LogLine { tone: LogTone::Out,  text: "  > Could not find com.qualcomm.robotcore:ftc-sdk:9.2." },
-    LogLine { tone: LogTone::Out,  text: "    Required by: project :TeamCode" },
-    LogLine { tone: LogTone::Info, text: "BUILD FAILED in 12s" },
+    LogLine {
+        tone: LogTone::Info,
+        text: "> Configure project :TeamCode",
+    },
+    LogLine {
+        tone: LogTone::Info,
+        text: "> Task :TeamCode:compileDebugJavaWithJavac",
+    },
+    LogLine {
+        tone: LogTone::Info,
+        text: "Resolving dependencies for configuration ':TeamCode:debugCompileClasspath'",
+    },
+    LogLine {
+        tone: LogTone::Err,
+        text: "FAILURE: Build failed with an exception.",
+    },
+    LogLine {
+        tone: LogTone::Out,
+        text: "* What went wrong:",
+    },
+    LogLine {
+        tone: LogTone::Out,
+        text: "Could not resolve all files for configuration ':TeamCode:debugCompileClasspath'.",
+    },
+    LogLine {
+        tone: LogTone::Out,
+        text: "  > Could not find com.qualcomm.robotcore:ftc-sdk:9.2.",
+    },
+    LogLine {
+        tone: LogTone::Out,
+        text: "    Required by: project :TeamCode",
+    },
+    LogLine {
+        tone: LogTone::Info,
+        text: "BUILD FAILED in 12s",
+    },
 ];
 
 pub fn gradle_repair_panel() -> impl View {
@@ -63,16 +90,18 @@ pub fn gradle_repair_panel() -> impl View {
 fn status_banner(build_state: RwSignal<BuildState>) -> impl View {
     container(
         label(move || match build_state.get() {
-            BuildState::Idle    => "Gradle Repair — ready.".to_string(),
+            BuildState::Idle => "Gradle Repair — ready.".to_string(),
             BuildState::Running => "Building\u{2026}".to_string(),
-            BuildState::Failed  => "BUILD FAILED — could not resolve com.qualcomm.robotcore:ftc-sdk:9.2".to_string(),
+            BuildState::Failed => {
+                "BUILD FAILED — could not resolve com.qualcomm.robotcore:ftc-sdk:9.2".to_string()
+            }
             BuildState::Success => "BUILD SUCCESSFUL".to_string(),
         })
         .style(move |s| {
             let color = match build_state.get() {
-                BuildState::Idle    => FG_2,
+                BuildState::Idle => FG_2,
                 BuildState::Running => STATUS_INFO,
-                BuildState::Failed  => STATUS_ERROR,
+                BuildState::Failed => STATUS_ERROR,
                 BuildState::Success => STATUS_SUCCESS,
             };
             s.color(color).font_size(T_SMALL)
@@ -81,7 +110,7 @@ fn status_banner(build_state: RwSignal<BuildState>) -> impl View {
     .style(move |s| {
         let bg = match build_state.get() {
             BuildState::Idle | BuildState::Running => BG_SURFACE,
-            BuildState::Failed  => floem::peniko::Color::from_rgb8(0x3A, 0x0D, 0x10),
+            BuildState::Failed => floem::peniko::Color::from_rgb8(0x3A, 0x0D, 0x10),
             BuildState::Success => floem::peniko::Color::from_rgb8(0x0D, 0x3A, 0x23),
         };
         s.padding_horiz(14.0)
@@ -205,9 +234,9 @@ fn log_view() -> impl View {
             |(i, _)| *i,
             |(_, line)| {
                 let color = match line.tone {
-                    LogTone::Err  => STATUS_ERROR,
+                    LogTone::Err => STATUS_ERROR,
                     LogTone::Info => ALLOY_ORANGE,
-                    LogTone::Out  => FG_2,
+                    LogTone::Out => FG_2,
                 };
                 let text = line.text;
                 label(move || text.to_string()).style(move |s| {
@@ -220,11 +249,7 @@ fn log_view() -> impl View {
         )
         .style(|s| s.flex_col().padding(12.0).width_pct(100.0)),
     )
-    .style(|s| {
-        s.flex_grow(1.0)
-            .background(BG_NAVY)
-            .width_pct(100.0)
-    })
+    .style(|s| s.flex_grow(1.0).background(BG_NAVY).width_pct(100.0))
 }
 
 fn footer(build_state: RwSignal<BuildState>) -> impl View {

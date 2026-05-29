@@ -2,12 +2,12 @@
 //!
 //! Reference: kit/ActivityBar.jsx.
 
-use std::sync::Arc;
-use floem::View;
+use crate::theme::*;
 use floem::reactive::{RwSignal, SignalGet};
 use floem::style::CursorStyle;
-use floem::views::{Decorators, container, empty, label, v_stack, img};
-use crate::theme::*;
+use floem::views::{container, empty, img, label, v_stack, Decorators};
+use floem::View;
+use std::sync::Arc;
 
 static ALLOY_LOGO: &[u8] = include_bytes!("../extra/images/logo.png");
 
@@ -20,16 +20,10 @@ pub enum ActivityTab {
     Extensions,
 }
 
-pub fn activity_bar(
-    active: RwSignal<ActivityTab>,
-    on_settings: Arc<dyn Fn()>,
-) -> impl View {
+pub fn activity_bar(active: RwSignal<ActivityTab>, on_settings: Arc<dyn Fn()>) -> impl View {
     v_stack((
         // Logo at top
-        container(
-            img(|| ALLOY_LOGO.to_vec()).style(|s| s.width(26.0).height(26.0))
-        )
-        .style(|s| {
+        container(img(|| ALLOY_LOGO.to_vec()).style(|s| s.width(26.0).height(26.0))).style(|s| {
             s.width(UI_ACTIVITY_WIDTH)
                 .height(UI_ACTIVITY_WIDTH)
                 .items_center()
@@ -44,18 +38,16 @@ pub fn activity_bar(
         // Spacer
         container(empty()).style(|s| s.flex_grow(1.0f32)),
         // Settings at bottom
-        container(
-            label(|| "gear".to_string()).style(|s| s.color(FG_3).font_size(T_MD))
-        )
-        .on_click_stop(move |_| (on_settings)())
-        .style(|s| {
-            s.width(UI_ACTIVITY_WIDTH)
-                .height(UI_ACTIVITY_WIDTH)
-                .items_center()
-                .justify_center()
-                .cursor(CursorStyle::Pointer)
-                .hover(|s| s.color(FG_1))
-        }),
+        container(label(|| "gear".to_string()).style(|s| s.color(FG_3).font_size(T_MD)))
+            .on_click_stop(move |_| (on_settings)())
+            .style(|s| {
+                s.width(UI_ACTIVITY_WIDTH)
+                    .height(UI_ACTIVITY_WIDTH)
+                    .items_center()
+                    .justify_center()
+                    .cursor(CursorStyle::Pointer)
+                    .hover(|s| s.color(FG_1))
+            }),
     ))
     .style(|s| {
         s.width(UI_ACTIVITY_WIDTH)
@@ -85,7 +77,11 @@ fn activity_btn(
                     .background(ALLOY_ORANGE)
                     .border_radius(R_2)
                     .margin_left(0.0);
-                if active.get() == tab { s } else { s.hide() }
+                if active.get() == tab {
+                    s
+                } else {
+                    s.hide()
+                }
             }),
             label(move || glyph.to_string()).style(move |s| {
                 let c = if active.get() == tab { FG_1 } else { FG_3 };

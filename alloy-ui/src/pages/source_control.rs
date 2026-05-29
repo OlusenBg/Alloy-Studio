@@ -8,26 +8,38 @@
 
 use std::sync::Arc;
 
-use floem::View;
-use floem::reactive::{RwSignal, SignalGet, SignalUpdate, create_rw_signal};
+use floem::reactive::{create_rw_signal, RwSignal, SignalGet, SignalUpdate};
 use floem::style::CursorStyle;
 use floem::views::{
-    Decorators, container, dyn_stack, empty, h_stack, label, scroll, text_input, v_stack,
+    container, dyn_stack, empty, h_stack, label, scroll, text_input, v_stack, Decorators,
 };
+use floem::View;
 
 use crate::theme::*;
 
 // ── Public model ─────────────────────────────────────────────────────────────
 
 #[derive(Clone, Copy, PartialEq)]
-pub enum ScmStatus { Added, Modified, Deleted }
+pub enum ScmStatus {
+    Added,
+    Modified,
+    Deleted,
+}
 
 impl ScmStatus {
     fn letter(self) -> &'static str {
-        match self { Self::Added => "A", Self::Modified => "M", Self::Deleted => "D" }
+        match self {
+            Self::Added => "A",
+            Self::Modified => "M",
+            Self::Deleted => "D",
+        }
     }
     fn color(self) -> floem::peniko::Color {
-        match self { Self::Added => SCM_ADDED, Self::Modified => SCM_MODIFIED, Self::Deleted => SCM_REMOVED }
+        match self {
+            Self::Added => SCM_ADDED,
+            Self::Modified => SCM_MODIFIED,
+            Self::Deleted => SCM_REMOVED,
+        }
     }
 }
 
@@ -42,78 +54,71 @@ pub struct ChangedFile {
 
 #[derive(Clone)]
 pub struct CommitNodeData {
-    pub id:      String,
+    pub id: String,
     pub message: String,
-    pub author:  String,
-    pub when:    String,
-    pub files:   u32,
-    pub mine:    bool,
+    pub author: String,
+    pub when: String,
+    pub files: u32,
+    pub mine: bool,
 }
 
 #[derive(Clone)]
 pub struct BranchInfo {
-    pub name:    String,
-    pub ahead:   u32,
-    pub behind:  u32,
+    pub name: String,
+    pub ahead: u32,
+    pub behind: u32,
     pub current: bool,
-    pub last:    String,
-    pub remote:  bool,
+    pub last: String,
+    pub remote: bool,
 }
 
 #[derive(Clone)]
 pub struct SourceControlSignals {
-    pub branch:    RwSignal<String>,
-    pub ahead:     RwSignal<u32>,
-    pub behind:    RwSignal<u32>,
-    pub staged:    RwSignal<Vec<ChangedFile>>,
-    pub unstaged:  RwSignal<Vec<ChangedFile>>,
+    pub branch: RwSignal<String>,
+    pub ahead: RwSignal<u32>,
+    pub behind: RwSignal<u32>,
+    pub staged: RwSignal<Vec<ChangedFile>>,
+    pub unstaged: RwSignal<Vec<ChangedFile>>,
     pub commit_msg: RwSignal<String>,
-    pub history:   RwSignal<Vec<CommitNodeData>>,
-    pub branches:  RwSignal<Vec<BranchInfo>>,
+    pub history: RwSignal<Vec<CommitNodeData>>,
+    pub branches: RwSignal<Vec<BranchInfo>>,
     pub history_filter: RwSignal<String>,
 }
 
 #[derive(Clone)]
 pub struct SourceControlHandlers {
-    pub on_fetch:           Arc<dyn Fn()>,
-    pub on_pull:            Arc<dyn Fn()>,
-    pub on_push:            Arc<dyn Fn()>,
-    pub on_stage:           Arc<dyn Fn(String)>,
-    pub on_unstage:         Arc<dyn Fn(String)>,
-    pub on_stage_all:       Arc<dyn Fn()>,
-    pub on_unstage_all:     Arc<dyn Fn()>,
-    pub on_generate_msg:    Arc<dyn Fn()>,
-    pub on_commit:          Arc<dyn Fn()>,
-    pub on_commit_push:     Arc<dyn Fn()>,
-    pub on_switch_branch:   Arc<dyn Fn(String)>,
-    pub on_new_branch:      Arc<dyn Fn()>,
-    pub on_pick_commit:     Arc<dyn Fn(String)>,
+    pub on_fetch: Arc<dyn Fn()>,
+    pub on_pull: Arc<dyn Fn()>,
+    pub on_push: Arc<dyn Fn()>,
+    pub on_stage: Arc<dyn Fn(String)>,
+    pub on_unstage: Arc<dyn Fn(String)>,
+    pub on_stage_all: Arc<dyn Fn()>,
+    pub on_unstage_all: Arc<dyn Fn()>,
+    pub on_generate_msg: Arc<dyn Fn()>,
+    pub on_commit: Arc<dyn Fn()>,
+    pub on_commit_push: Arc<dyn Fn()>,
+    pub on_switch_branch: Arc<dyn Fn(String)>,
+    pub on_new_branch: Arc<dyn Fn()>,
+    pub on_pick_commit: Arc<dyn Fn(String)>,
 }
 
 // ── Entry point ──────────────────────────────────────────────────────────────
 
-pub fn source_control_page(
-    s: SourceControlSignals,
-    h: SourceControlHandlers,
-) -> impl View {
+pub fn source_control_page(s: SourceControlSignals, h: SourceControlHandlers) -> impl View {
     let show_branches = create_rw_signal(false);
 
     h_stack((
         left_pane(s.clone(), h.clone(), show_branches),
         right_pane(s.clone()),
     ))
-    .style(|s| {
-        s.width_pct(100.0)
-            .height_pct(100.0)
-            .background(BG_NAVY)
-    })
+    .style(|s| s.width_pct(100.0).height_pct(100.0).background(BG_NAVY))
 }
 
 // ── Left pane (changes + commit) ─────────────────────────────────────────────
 
 fn left_pane(
     sigs: SourceControlSignals,
-    h:    SourceControlHandlers,
+    h: SourceControlHandlers,
     show_branches: RwSignal<bool>,
 ) -> impl View {
     v_stack((
@@ -134,7 +139,7 @@ fn left_pane(
 
 fn top_bar(
     sigs: SourceControlSignals,
-    h:    SourceControlHandlers,
+    h: SourceControlHandlers,
     show_branches: RwSignal<bool>,
 ) -> impl View {
     let branch = sigs.branch;
@@ -170,16 +175,21 @@ fn top_bar(
 
 fn branch_pill(
     branch: RwSignal<String>,
-    ahead:  RwSignal<u32>,
+    ahead: RwSignal<u32>,
     behind: RwSignal<u32>,
-    show:   RwSignal<bool>,
+    show: RwSignal<bool>,
 ) -> impl View {
     container(
         h_stack((
-            label(|| "⎇".to_string()).style(|s| s.color(ALLOY_ORANGE).font_size(T_SMALL).margin_right(6.0)),
+            label(|| "⎇".to_string())
+                .style(|s| s.color(ALLOY_ORANGE).font_size(T_SMALL).margin_right(6.0)),
             label(move || branch.get()).style(|s| s.color(FG_1).font_size(T_SMALL)),
-            label(move || format!("  +{} -{}", ahead.get(), behind.get()))
-                .style(|s| s.color(FG_3).font_size(T_TINY).font_family("monospace".to_string()).margin_left(6.0)),
+            label(move || format!("  +{} -{}", ahead.get(), behind.get())).style(|s| {
+                s.color(FG_3)
+                    .font_size(T_TINY)
+                    .font_family("monospace".to_string())
+                    .margin_left(6.0)
+            }),
             label(|| " v".to_string()).style(|s| s.color(FG_3).font_size(T_MICRO).margin_left(6.0)),
         ))
         .style(|s| s.items_center()),
@@ -220,28 +230,36 @@ fn section(
     files: RwSignal<Vec<ChangedFile>>,
     staged: bool,
     on_each: Arc<dyn Fn(String)>,
-    on_all:  Arc<dyn Fn()>,
+    on_all: Arc<dyn Fn()>,
 ) -> impl View {
     let action_text = if staged { "Unstage all" } else { "Stage all" };
     v_stack((
         h_stack((
             label(move || label_text.to_string()).style(|s| {
-                s.color(FG_2).font_size(T_MICRO).font_weight(floem::text::Weight::BOLD)
+                s.color(FG_2)
+                    .font_size(T_MICRO)
+                    .font_weight(floem::text::Weight::BOLD)
             }),
             label(move || files.get().len().to_string()).style(|s| {
-                s.color(FG_4).font_size(T_MICRO).font_family("monospace".to_string()).margin_left(8.0)
+                s.color(FG_4)
+                    .font_size(T_MICRO)
+                    .font_family("monospace".to_string())
+                    .margin_left(8.0)
             }),
             container(empty()).style(|s| s.flex_grow(1.0f32)),
-            container(label(move || action_text.to_string())
-                .style(|s| s.color(FG_3).font_size(T_MICRO)))
-                .on_click_stop(move |_| (on_all)())
-                .style(|s| s.cursor(CursorStyle::Pointer).hover(|s| s.color(FG_1))),
-        )).style(|s| s.items_center().margin_bottom(6.0).width_pct(100.0)),
+            container(
+                label(move || action_text.to_string()).style(|s| s.color(FG_3).font_size(T_MICRO)),
+            )
+            .on_click_stop(move |_| (on_all)())
+            .style(|s| s.cursor(CursorStyle::Pointer).hover(|s| s.color(FG_1))),
+        ))
+        .style(|s| s.items_center().margin_bottom(6.0).width_pct(100.0)),
         dyn_stack(
             move || files.get(),
             |f: &ChangedFile| f.name.clone(),
             move |f| file_row(f, staged, on_each.clone()),
-        ).style(|s| s.flex_col().gap(2.0).width_pct(100.0)),
+        )
+        .style(|s| s.flex_col().gap(2.0).width_pct(100.0)),
     ))
     .style(|s| s.flex_col().width_pct(100.0))
 }
@@ -266,14 +284,24 @@ fn file_row(f: ChangedFile, staged: bool, on_each: Arc<dyn Fn(String)>) -> impl 
         v_stack((
             label(move || name.clone()).style(|s| s.color(FG_1).font_size(T_SMALL)),
             label(move || path.clone()).style(|s| {
-                s.color(FG_3).font_size(T_MICRO).font_family("monospace".to_string())
+                s.color(FG_3)
+                    .font_size(T_MICRO)
+                    .font_family("monospace".to_string())
             }),
-        )).style(|s| s.flex_grow(1.0).min_width(0.0).gap(2.0)),
+        ))
+        .style(|s| s.flex_grow(1.0).min_width(0.0).gap(2.0)),
         delta_bars(adds, dels),
-        container(label(move || (if staged { "-" } else { "+" }).to_string())
-            .style(|s| s.color(FG_1).font_size(T_MD)))
-            .on_click_stop(move |_| (on_each)(row_name.clone()))
-            .style(|s| s.width(16.0).items_center().justify_center().cursor(CursorStyle::Pointer)),
+        container(
+            label(move || (if staged { "-" } else { "+" }).to_string())
+                .style(|s| s.color(FG_1).font_size(T_MD)),
+        )
+        .on_click_stop(move |_| (on_each)(row_name.clone()))
+        .style(|s| {
+            s.width(16.0)
+                .items_center()
+                .justify_center()
+                .cursor(CursorStyle::Pointer)
+        }),
     ))
     .style(|s| {
         s.padding_horiz(8.0)
@@ -301,9 +329,7 @@ fn delta_bars(add: u32, del: u32) -> impl View {
         } else {
             BG_EDGE
         };
-        container(empty()).style(move |s| {
-            s.width(5.0).height(9.0).background(c).border_radius(1.0)
-        })
+        container(empty()).style(move |s| s.width(5.0).height(9.0).background(c).border_radius(1.0))
     });
     floem::views::stack_from_iter(cells).style(|s| s.gap(1.0).items_center())
 }
@@ -315,33 +341,47 @@ fn commit_area(sigs: SourceControlSignals, h: SourceControlHandlers) -> impl Vie
     let on_commit_push = h.on_commit_push.clone();
     v_stack((
         label(|| "COMMIT MESSAGE".to_string()).style(|s| {
-            s.color(FG_3).font_size(T_MICRO).font_weight(floem::text::Weight::BOLD)
+            s.color(FG_3)
+                .font_size(T_MICRO)
+                .font_weight(floem::text::Weight::BOLD)
         }),
-        text_input(msg)
-            .keyboard_navigable()
-            .style(|s| {
-                s.width_pct(100.0)
-                    .min_height(84.0)
-                    .background(BG_NAVY)
-                    .border(1.0)
-                    .border_color(LINE_RING)
-                    .color(FG_1)
-                    .padding_horiz(10.0)
-                    .padding_vert(8.0)
-                    .font_size(T_SMALL)
-                    .border_radius(R_4)
-            }),
+        text_input(msg).keyboard_navigable().style(|s| {
+            s.width_pct(100.0)
+                .min_height(84.0)
+                .background(BG_NAVY)
+                .border(1.0)
+                .border_color(LINE_RING)
+                .color(FG_1)
+                .padding_horiz(10.0)
+                .padding_vert(8.0)
+                .font_size(T_SMALL)
+                .border_radius(R_4)
+        }),
         h_stack((
             panel_btn_small_glyph("Generate Message", ALLOY_ORANGE, on_generate),
             container(empty()).style(|s| s.flex_grow(1.0f32)),
-            label(move || format!("{} / 72",
-                msg.get().lines().next().map(|l| l.chars().count()).unwrap_or(0))
-            ).style(|s| s.color(FG_4).font_size(T_MICRO).font_family("monospace".to_string())),
-        )).style(|s| s.items_center().width_pct(100.0).gap(6.0)),
+            label(move || {
+                format!(
+                    "{} / 72",
+                    msg.get()
+                        .lines()
+                        .next()
+                        .map(|l| l.chars().count())
+                        .unwrap_or(0)
+                )
+            })
+            .style(|s| {
+                s.color(FG_4)
+                    .font_size(T_MICRO)
+                    .font_family("monospace".to_string())
+            }),
+        ))
+        .style(|s| s.items_center().width_pct(100.0).gap(6.0)),
         h_stack((
             panel_btn_grow("Commit", on_commit),
             primary_btn_grow("Commit & Push", on_commit_push),
-        )).style(|s| s.gap(6.0).width_pct(100.0)),
+        ))
+        .style(|s| s.gap(6.0).width_pct(100.0)),
     ))
     .style(|s| {
         s.padding(12.0)
@@ -364,7 +404,9 @@ fn right_pane(s: SourceControlSignals) -> impl View {
     v_stack((
         h_stack((
             label(move || format!("COMMIT HISTORY - {}", branch.get().to_uppercase())).style(|s| {
-                s.color(FG_3).font_size(T_MICRO).font_weight(floem::text::Weight::BOLD)
+                s.color(FG_3)
+                    .font_size(T_MICRO)
+                    .font_weight(floem::text::Weight::BOLD)
             }),
             container(empty()).style(|s| s.flex_grow(1.0f32)),
             text_input(filter)
@@ -395,38 +437,44 @@ fn right_pane(s: SourceControlSignals) -> impl View {
         scroll(timeline(history, filter))
             .style(|s| s.flex_grow(1.0).width_pct(100.0).padding(16.0)),
     ))
-    .style(|s| s.flex_col().flex_grow(1.0).width_pct(100.0).height_pct(100.0))
+    .style(|s| {
+        s.flex_col()
+            .flex_grow(1.0)
+            .width_pct(100.0)
+            .height_pct(100.0)
+    })
 }
 
-fn timeline(
-    history: RwSignal<Vec<CommitNodeData>>,
-    filter:  RwSignal<String>,
-) -> impl View {
-    container(
-        v_stack((
-            container(empty()).style(|s| {
-                s.absolute()
-                    .width(1.0)
-                    .height_pct(100.0)
-                    .background(LINE_RING)
-                    .margin_left(9.0)
-                    .margin_top(8.0)
-            }),
-            dyn_stack(
-                move || {
-                    let f = filter.get().to_lowercase();
-                    history.get().into_iter()
-                        .filter(|c| f.is_empty()
+fn timeline(history: RwSignal<Vec<CommitNodeData>>, filter: RwSignal<String>) -> impl View {
+    container(v_stack((
+        container(empty()).style(|s| {
+            s.absolute()
+                .width(1.0)
+                .height_pct(100.0)
+                .background(LINE_RING)
+                .margin_left(9.0)
+                .margin_top(8.0)
+        }),
+        dyn_stack(
+            move || {
+                let f = filter.get().to_lowercase();
+                history
+                    .get()
+                    .into_iter()
+                    .filter(|c| {
+                        f.is_empty()
                             || c.message.to_lowercase().contains(&f)
                             || c.author.to_lowercase().contains(&f)
-                            || c.id.contains(&f))
-                        .collect::<Vec<_>>()
-                },
-                |c| c.id.clone(),
-                commit_node,
-            ).style(|s| s.flex_col().padding_left(24.0).width_pct(100.0)),
-        )),
-    ).style(|s| s.relative().width_pct(100.0))
+                            || c.id.contains(&f)
+                    })
+                    .collect::<Vec<_>>()
+            },
+            |c| c.id.clone(),
+            commit_node,
+        )
+        .style(|s| s.flex_col().padding_left(24.0).width_pct(100.0)),
+    )))
+    .style(|s| s.relative().width_pct(100.0))
 }
 
 fn commit_node(c: CommitNodeData) -> impl View {
@@ -436,9 +484,13 @@ fn commit_node(c: CommitNodeData) -> impl View {
     let author = c.author.clone();
     let when = c.when.clone();
     let files = c.files;
-    let avatar_initials = c.author.split_whitespace()
+    let avatar_initials = c
+        .author
+        .split_whitespace()
         .filter_map(|w| w.chars().next())
-        .take(2).collect::<String>().to_uppercase();
+        .take(2)
+        .collect::<String>()
+        .to_uppercase();
     let avatar_color = avatar_palette(&c.author);
 
     h_stack((
@@ -466,18 +518,21 @@ fn commit_node(c: CommitNodeData) -> impl View {
                 .margin_horiz(10.0)
         }),
         v_stack((
-            label(move || msg.clone())
-                .style(|s| s.color(FG_1).font_size(T_SMALL)),
+            label(move || msg.clone()).style(|s| s.color(FG_1).font_size(T_SMALL)),
             h_stack((
                 label(move || author.clone()).style(|s| s.color(FG_3).font_size(T_MICRO)),
                 label(|| " · ".to_string()).style(|s| s.color(FG_3).font_size(T_MICRO)),
                 label(move || when.clone()).style(|s| s.color(FG_3).font_size(T_MICRO)),
                 label(|| " · ".to_string()).style(|s| s.color(FG_3).font_size(T_MICRO)),
                 label(move || format!("{files} files")).style(|s| s.color(FG_3).font_size(T_MICRO)),
-            )).style(|s| s.items_center().margin_top(3.0)),
-        )).style(|s| s.flex_grow(1.0).min_width(0.0).gap(0.0)),
+            ))
+            .style(|s| s.items_center().margin_top(3.0)),
+        ))
+        .style(|s| s.flex_grow(1.0).min_width(0.0).gap(0.0)),
         label(move || id.clone()).style(|s| {
-            s.font_family("monospace".to_string()).color(FG_3).font_size(T_MICRO)
+            s.font_family("monospace".to_string())
+                .color(FG_3)
+                .font_size(T_MICRO)
         }),
     ))
     .style(|s| {
@@ -494,7 +549,13 @@ fn commit_node(c: CommitNodeData) -> impl View {
 }
 
 fn avatar_palette(name: &str) -> floem::peniko::Color {
-    let palette = [ALLOY_ORANGE, STATUS_INFO, STATUS_SUCCESS, SYN_KEYWORD, SYN_NUMBER];
+    let palette = [
+        ALLOY_ORANGE,
+        STATUS_INFO,
+        STATUS_SUCCESS,
+        SYN_KEYWORD,
+        SYN_NUMBER,
+    ];
     let h: usize = name.bytes().fold(0usize, |a, b| a.wrapping_add(b as usize));
     palette[h % palette.len()]
 }
@@ -505,29 +566,41 @@ fn branch_palette(
     show: RwSignal<bool>,
     branches: RwSignal<Vec<BranchInfo>>,
     on_switch: Arc<dyn Fn(String)>,
-    on_new:    Arc<dyn Fn()>,
+    on_new: Arc<dyn Fn()>,
 ) -> impl View {
     let query = create_rw_signal(String::new());
     container(
         v_stack((
             h_stack((
-                label(|| "search".to_string()).style(|s| s.color(FG_3).font_size(T_TINY).margin_right(8.0)),
+                label(|| "search".to_string())
+                    .style(|s| s.color(FG_3).font_size(T_TINY).margin_right(8.0)),
                 text_input(query)
                     .placeholder("Switch to or create branch...")
                     .keyboard_navigable()
-                    .style(|s| s.flex_grow(1.0).color(FG_1).font_size(T_SMALL).background(floem::peniko::Color::TRANSPARENT)),
+                    .style(|s| {
+                        s.flex_grow(1.0)
+                            .color(FG_1)
+                            .font_size(T_SMALL)
+                            .background(floem::peniko::Color::TRANSPARENT)
+                    }),
                 container(label(|| "x".to_string()).style(|s| s.color(FG_3).font_size(T_TINY)))
                     .on_click_stop(move |_| show.set(false))
                     .style(|s| s.padding(2.0).cursor(CursorStyle::Pointer)),
-            )).style(|s| {
-                s.height(36.0).padding_horiz(12.0).items_center()
-                    .border_bottom(1.0).border_color(BG_EDGE)
+            ))
+            .style(|s| {
+                s.height(36.0)
+                    .padding_horiz(12.0)
+                    .items_center()
+                    .border_bottom(1.0)
+                    .border_color(BG_EDGE)
             }),
             scroll(
                 dyn_stack(
                     move || {
                         let q = query.get().to_lowercase();
-                        branches.get().into_iter()
+                        branches
+                            .get()
+                            .into_iter()
                             .filter(|b| q.is_empty() || b.name.to_lowercase().contains(&q))
                             .collect::<Vec<_>>()
                     },
@@ -536,19 +609,28 @@ fn branch_palette(
                         let on_switch = on_switch.clone();
                         move |b| branch_row(b, on_switch.clone())
                     },
-                ).style(|s| s.flex_col().padding_vert(4.0).width_pct(100.0))
-            ).style(|s| s.max_height(320.0).width_pct(100.0)),
+                )
+                .style(|s| s.flex_col().padding_vert(4.0).width_pct(100.0)),
+            )
+            .style(|s| s.max_height(320.0).width_pct(100.0)),
             container(
                 h_stack((
-                    label(|| "+ ".to_string()).style(|s| s.color(ALLOY_ORANGE).font_size(T_TINY).margin_right(8.0)),
-                    label(|| "Create branch from main...".to_string()).style(|s| s.color(FG_3).font_size(T_TINY)),
-                )).style(|s| s.items_center())
+                    label(|| "+ ".to_string())
+                        .style(|s| s.color(ALLOY_ORANGE).font_size(T_TINY).margin_right(8.0)),
+                    label(|| "Create branch from main...".to_string())
+                        .style(|s| s.color(FG_3).font_size(T_TINY)),
+                ))
+                .style(|s| s.items_center()),
             )
             .on_click_stop(move |_| (on_new)())
             .style(|s| {
-                s.padding_horiz(12.0).padding_vert(6.0)
-                    .background(BG_SURFACE).border_top(1.0).border_color(BG_EDGE)
-                    .cursor(CursorStyle::Pointer).hover(|s| s.background(BG_HOVER))
+                s.padding_horiz(12.0)
+                    .padding_vert(6.0)
+                    .background(BG_SURFACE)
+                    .border_top(1.0)
+                    .border_color(BG_EDGE)
+                    .cursor(CursorStyle::Pointer)
+                    .hover(|s| s.background(BG_HOVER))
             }),
         ))
         .style(|s| {
@@ -559,11 +641,15 @@ fn branch_palette(
                 .box_shadow_color(floem::peniko::Color::from_rgba8(0, 0, 0, 0x8C))
                 .box_shadow_v_offset(12.0)
                 .flex_col()
-        })
+        }),
     )
     .style(move |s| {
         let s = s.absolute().margin_top(40.0).margin_left(12.0).z_index(50);
-        if show.get() { s } else { s.hide() }
+        if show.get() {
+            s
+        } else {
+            s.hide()
+        }
     })
 }
 
@@ -577,22 +663,37 @@ fn branch_row(b: BranchInfo, on_switch: Arc<dyn Fn(String)>) -> impl View {
     let behind = b.behind;
 
     h_stack((
-        label(move || if current { "check".to_string() } else { " ".to_string() })
-            .style(|s| s.color(ALLOY_ORANGE).font_size(T_TINY).width(12.0)),
+        label(move || {
+            if current {
+                "check".to_string()
+            } else {
+                " ".to_string()
+            }
+        })
+        .style(|s| s.color(ALLOY_ORANGE).font_size(T_TINY).width(12.0)),
         label(move || (if remote { "cloud" } else { "branch" }).to_string())
             .style(|s| s.color(FG_3).font_size(T_TINY).margin_horiz(6.0)),
         label(move || name_for_label.clone()).style(|s| {
-            s.color(FG_1).font_size(T_SMALL).font_family("monospace".to_string())
+            s.color(FG_1)
+                .font_size(T_SMALL)
+                .font_family("monospace".to_string())
         }),
-        container(label(move || format!("+{ahead} -{behind}"))
-            .style(|s| s.color(FG_3).font_size(T_MICRO).font_family("monospace".to_string()).margin_left(6.0)))
-            .style(move |s| {
-                if !remote && (ahead > 0 || behind > 0) { s } else { s.hide() }
-            }),
+        container(label(move || format!("+{ahead} -{behind}")).style(|s| {
+            s.color(FG_3)
+                .font_size(T_MICRO)
+                .font_family("monospace".to_string())
+                .margin_left(6.0)
+        }))
+        .style(move |s| {
+            if !remote && (ahead > 0 || behind > 0) {
+                s
+            } else {
+                s.hide()
+            }
+        }),
         container(empty()).style(|s| s.flex_grow(1.0f32)),
-        label(move || last_for_label.clone()).style(|s| {
-            s.color(FG_4).font_size(T_MICRO).max_width(140.0)
-        }),
+        label(move || last_for_label.clone())
+            .style(|s| s.color(FG_4).font_size(T_MICRO).max_width(140.0)),
     ))
     .on_click_stop(move |_| (on_switch)(name_for_click.clone()))
     .style(|s| {
@@ -610,9 +711,13 @@ fn small_panel_btn(text: &'static str, on_click: Arc<dyn Fn()>) -> impl View {
     container(label(move || text.to_string()).style(|s| s.color(FG_1).font_size(T_TINY)))
         .on_click_stop(move |_| (on_click)())
         .style(|s| {
-            s.padding_horiz(8.0).padding_vert(4.0)
-                .background(BG_RAISED).border(1.0).border_color(BG_EDGE)
-                .border_radius(R_4).cursor(CursorStyle::Pointer)
+            s.padding_horiz(8.0)
+                .padding_vert(4.0)
+                .background(BG_RAISED)
+                .border(1.0)
+                .border_color(BG_EDGE)
+                .border_radius(R_4)
+                .cursor(CursorStyle::Pointer)
                 .hover(|s| s.background(BG_HOVER))
         })
 }
@@ -622,16 +727,24 @@ fn small_primary_btn_with_count(
     count: RwSignal<u32>,
     on_click: Arc<dyn Fn()>,
 ) -> impl View {
-    container(label(move || format!("{} {}", text, count.get()))
-        .style(|s| s.color(FG_1).font_size(T_TINY).font_weight(floem::text::Weight::SEMIBOLD)))
-        .on_click_stop(move |_| (on_click)())
-        .style(|s| {
-            s.padding_horiz(8.0).padding_vert(4.0)
-                .background(ALLOY_ORANGE).border_radius(R_4)
-                .cursor(CursorStyle::Pointer)
-                .box_shadow_blur(8.0).box_shadow_color(ALLOY_ORANGE_GLOW)
-                .hover(|s| s.background(ALLOY_ORANGE_DEEP))
-        })
+    container(
+        label(move || format!("{} {}", text, count.get())).style(|s| {
+            s.color(FG_1)
+                .font_size(T_TINY)
+                .font_weight(floem::text::Weight::SEMIBOLD)
+        }),
+    )
+    .on_click_stop(move |_| (on_click)())
+    .style(|s| {
+        s.padding_horiz(8.0)
+            .padding_vert(4.0)
+            .background(ALLOY_ORANGE)
+            .border_radius(R_4)
+            .cursor(CursorStyle::Pointer)
+            .box_shadow_blur(8.0)
+            .box_shadow_color(ALLOY_ORANGE_GLOW)
+            .hover(|s| s.background(ALLOY_ORANGE_DEEP))
+    })
 }
 
 fn panel_btn_small_glyph(
@@ -642,8 +755,10 @@ fn panel_btn_small_glyph(
     container(label(move || text.to_string()).style(|s| s.color(FG_1).font_size(T_TINY)))
         .on_click_stop(move |_| (on_click)())
         .style(|s| {
-            s.padding_horiz(10.0).padding_vert(5.0)
-                .background(BG_RAISED).border_radius(R_4)
+            s.padding_horiz(10.0)
+                .padding_vert(5.0)
+                .background(BG_RAISED)
+                .border_radius(R_4)
                 .cursor(CursorStyle::Pointer)
                 .hover(|s| s.background(BG_HOVER))
         })
@@ -653,9 +768,12 @@ fn panel_btn_grow(text: &'static str, on_click: Arc<dyn Fn()>) -> impl View {
     container(label(move || text.to_string()).style(|s| s.color(FG_1).font_size(T_TINY)))
         .on_click_stop(move |_| (on_click)())
         .style(|s| {
-            s.padding_vert(7.0).flex_grow(1.0)
-                .background(BG_RAISED).border_radius(R_4)
-                .items_center().justify_center()
+            s.padding_vert(7.0)
+                .flex_grow(1.0)
+                .background(BG_RAISED)
+                .border_radius(R_4)
+                .items_center()
+                .justify_center()
                 .cursor(CursorStyle::Pointer)
                 .hover(|s| s.background(BG_HOVER))
         })
@@ -663,15 +781,21 @@ fn panel_btn_grow(text: &'static str, on_click: Arc<dyn Fn()>) -> impl View {
 
 fn primary_btn_grow(text: &'static str, on_click: Arc<dyn Fn()>) -> impl View {
     container(label(move || text.to_string()).style(|s| {
-        s.color(FG_1).font_size(T_TINY).font_weight(floem::text::Weight::SEMIBOLD)
+        s.color(FG_1)
+            .font_size(T_TINY)
+            .font_weight(floem::text::Weight::SEMIBOLD)
     }))
     .on_click_stop(move |_| (on_click)())
     .style(|s| {
-        s.padding_vert(7.0).flex_grow(1.0)
-            .background(ALLOY_ORANGE).border_radius(R_4)
-            .items_center().justify_center()
+        s.padding_vert(7.0)
+            .flex_grow(1.0)
+            .background(ALLOY_ORANGE)
+            .border_radius(R_4)
+            .items_center()
+            .justify_center()
             .cursor(CursorStyle::Pointer)
-            .box_shadow_blur(8.0).box_shadow_color(ALLOY_ORANGE_GLOW)
+            .box_shadow_blur(8.0)
+            .box_shadow_color(ALLOY_ORANGE_GLOW)
             .hover(|s| s.background(ALLOY_ORANGE_DEEP))
     })
 }

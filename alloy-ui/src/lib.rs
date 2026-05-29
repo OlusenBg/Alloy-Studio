@@ -6,13 +6,13 @@
 pub mod theme;
 
 // ── Chrome ────────────────────────────────────────────────────────────────────
-pub mod statusbar;
-pub mod title_bar;
+pub mod activity_bar;
 pub mod command_palette;
+pub mod statusbar;
+pub mod tab_strip;
+pub mod title_bar;
 pub mod toast;
 pub mod welcome;
-pub mod activity_bar;
-pub mod tab_strip;
 
 // ── Dock panels ───────────────────────────────────────────────────────────────
 pub mod panels;
@@ -21,5 +21,5 @@ pub mod panels;
 pub mod pages;
 
 // ── Main shell compositor ─────────────────────────────────────────────────────
-pub mod shell;
 pub mod bottom_panel;
+pub mod shell;
