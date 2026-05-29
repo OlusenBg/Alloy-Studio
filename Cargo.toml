@@ -9,6 +9,7 @@ members = [
     "alloy-telemetry",
     "alloy-proxy",
     "alloy-app",
+    "alloy-ui",
 ]
 
 [workspace.package]
