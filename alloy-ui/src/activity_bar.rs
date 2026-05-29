@@ -30,11 +30,11 @@ pub fn activity_bar(active: RwSignal<ActivityTab>, on_settings: Arc<dyn Fn()>) -
                 .justify_center()
         }),
         // Main tabs
-        activity_btn(ActivityTab::Files, "files", "F", active.clone()),
-        activity_btn(ActivityTab::Search, "search", "S", active.clone()),
-        activity_btn(ActivityTab::SourceControl, "scm", "G", active.clone()),
-        activity_btn(ActivityTab::OpModes, "opmodes", "O", active.clone()),
-        activity_btn(ActivityTab::Extensions, "ext", "E", active.clone()),
+        activity_btn(ActivityTab::Files, "files", "F", active),
+        activity_btn(ActivityTab::Search, "search", "S", active),
+        activity_btn(ActivityTab::SourceControl, "scm", "G", active),
+        activity_btn(ActivityTab::OpModes, "opmodes", "O", active),
+        activity_btn(ActivityTab::Extensions, "ext", "E", active),
         // Spacer
         container(empty()).style(|s| s.flex_grow(1.0f32)),
         // Settings at bottom

@@ -43,7 +43,7 @@ pub fn alloy_command_palette(
     items: RwSignal<Vec<PaletteItem>>,
     selected: RwSignal<usize>,
 ) -> impl View {
-    let backdrop = container(
+    container(
         container(palette_card(query, items, selected, open))
             .style(|s| s.width(640.0).items_center()),
     )
@@ -62,9 +62,7 @@ pub fn alloy_command_palette(
         } else {
             s.hide()
         }
-    });
-
-    backdrop
+    })
 }
 
 fn palette_card(
@@ -133,14 +131,12 @@ fn results_list(
                 let v = items.get();
                 let mut out: Vec<(usize, PaletteRow)> = Vec::with_capacity(v.len() * 2);
                 let mut current_group = String::new();
-                let mut idx: usize = 0;
                 for (i, it) in v.into_iter().enumerate() {
                     if it.group != current_group {
                         current_group = it.group.clone();
                         out.push((100_000 + i, PaletteRow::Header(current_group.clone())));
                     }
-                    out.push((idx, PaletteRow::Item(i, it)));
-                    idx += 1;
+                    out.push((i, PaletteRow::Item(i, it)));
                 }
                 out
             },

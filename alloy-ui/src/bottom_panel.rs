@@ -115,7 +115,7 @@ fn tab_btn(
                     })
                     .into_any()
             } else {
-                label(|| String::new()).style(|s| s.hide()).into_any()
+                label(String::new).style(|s| s.hide()).into_any()
             }
         },
         // active indicator bar (bottom)

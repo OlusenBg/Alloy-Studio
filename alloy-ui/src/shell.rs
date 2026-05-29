@@ -341,7 +341,8 @@ pub fn editor_shell(bridge: Option<Arc<AppBridge>>) -> impl View {
             let cx2 = cx;
             let term_lines_clone = terminal_lines;
             let bottom_tab_clone = bottom_tab;
-            Arc::new(move || {
+            #[allow(clippy::arc_with_non_send_sync)]
+            let deploy = Arc::new(move || {
                 // Switch to Terminal tab
                 bottom_tab_clone.set(BottomPanelTab::Terminal);
 
@@ -356,31 +357,29 @@ pub fn editor_shell(bridge: Option<Arc<AppBridge>>) -> impl View {
                         runner.run(&[alloy_gradle::runner::GradleTask::AssembleDebug]);
 
                     let mut all_lines: Vec<String> = Vec::new();
-                    loop {
-                        match rx_event.recv().await {
-                            Ok(event) => match event {
-                                alloy_rpc::types::BuildEvent::OutputLine(text) => {
-                                    all_lines.push(text);
-                                }
-                                alloy_rpc::types::BuildEvent::ErrorDetected(err) => {
-                                    all_lines.push(format!("ERROR: {}", err.message));
-                                }
-                                alloy_rpc::types::BuildEvent::Finished { exit_code, .. } => {
-                                    let msg = if exit_code == 0 {
-                                        "BUILD SUCCESSFUL".to_string()
-                                    } else {
-                                        format!("BUILD FAILED (exit code {})", exit_code)
-                                    };
-                                    all_lines.push(msg);
-                                    break;
-                                }
-                            },
-                            Err(_) => break,
+                    while let Ok(event) = rx_event.recv().await {
+                        match event {
+                            alloy_rpc::types::BuildEvent::OutputLine(text) => {
+                                all_lines.push(text);
+                            }
+                            alloy_rpc::types::BuildEvent::ErrorDetected(err) => {
+                                all_lines.push(format!("ERROR: {}", err.message));
+                            }
+                            alloy_rpc::types::BuildEvent::Finished { exit_code, .. } => {
+                                let msg = if exit_code == 0 {
+                                    "BUILD SUCCESSFUL".to_string()
+                                } else {
+                                    format!("BUILD FAILED (exit code {})", exit_code)
+                                };
+                                all_lines.push(msg);
+                                break;
+                            }
                         }
                     }
                     action(all_lines);
                 });
-            })
+            });
+            deploy
         } else {
             Arc::new(|| {})
         }
@@ -411,6 +410,7 @@ pub fn editor_shell(bridge: Option<Arc<AppBridge>>) -> impl View {
     let tabs_for_select = tabs;
     let active_for_select = active_tab;
     let open_for_select = open_file;
+    #[allow(clippy::arc_with_non_send_sync)]
     let on_select: Arc<dyn Fn(String)> = Arc::new(move |id: String| {
         active_for_select.set(id.clone());
         let name = tabs_for_select
@@ -423,6 +423,7 @@ pub fn editor_shell(bridge: Option<Arc<AppBridge>>) -> impl View {
     });
     let tabs_for_close = tabs;
     let active_for_close = active_tab;
+    #[allow(clippy::arc_with_non_send_sync)]
     let on_close: Arc<dyn Fn(String)> = Arc::new(move |id: String| {
         tabs_for_close.update(|ts| ts.retain(|t| t.id != id));
         if active_for_close.get() == id {
@@ -933,10 +934,12 @@ fn editor_column(
     _on_open_opmode: Arc<dyn Fn(&'static str)>,
     terminal_lines: RwSignal<Vec<String>>,
 ) -> impl View {
+    #[allow(clippy::arc_with_non_send_sync)]
     let on_maximize = {
         let bm = bottom_max;
         Arc::new(move || bm.update(|v| *v = !*v)) as Arc<dyn Fn()>
     };
+    #[allow(clippy::arc_with_non_send_sync)]
     let on_close_panel = {
         let bh = bottom_hidden;
         Arc::new(move || bh.set(true)) as Arc<dyn Fn()>
