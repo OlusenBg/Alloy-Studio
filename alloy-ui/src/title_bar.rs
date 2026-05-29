@@ -148,7 +148,7 @@ fn command_pill(
             label(move || project_name.get()).style(|s| {
                 s.color(FG_1)
                     .font_size(T_SMALL)
-                    .font_weight(floem::text::Weight::MEDIUM)
+                    .font_weight(floem::text::FontWeight::MEDIUM)
             }),
             label(|| "·".to_string()).style(|s| s.color(FG_4).font_size(T_SMALL).margin_horiz(6.0)),
             label(move || team.get()).style(|s| s.color(FG_3).font_size(T_SMALL)),
@@ -213,7 +213,7 @@ fn run_button(on_run: Arc<dyn Fn()>) -> impl View {
             label(|| "Deploy".to_string()).style(|s| {
                 s.color(FG_1)
                     .font_size(T_TINY)
-                    .font_weight(floem::text::Weight::SEMIBOLD)
+                    .font_weight(floem::text::FontWeight::SEMI_BOLD)
             }),
         ))
         .style(|s| s.items_center()),

@@ -8,7 +8,7 @@
 
 use floem::reactive::{RwSignal, SignalGet};
 use floem::style::CursorStyle;
-use floem::views::{container, dyn_stack, empty, h_stack, label, scroll, v_stack, Decorators};
+use floem::views::{container, dyn_stack, empty, h_stack, label, v_stack, Decorators};
 use floem::View;
 
 use crate::theme::*;
@@ -91,7 +91,7 @@ fn header(file_name: RwSignal<String>) -> impl View {
             s.flex_grow(1.0)
                 .color(FG_2)
                 .font_size(T_TINY)
-                .font_weight(floem::text::Weight::BOLD)
+                .font_weight(floem::text::FontWeight::BOLD)
         }),
         label(move || file_name.get()).style(|s| {
             s.color(FG_3)
@@ -161,7 +161,7 @@ fn symbol_row(sym: OutlineSymbol, on_pick: std::sync::Arc<dyn Fn(u32)>) -> impl 
                     );
                     s.color(FG_1)
                         .font_size(T_SMALL)
-                        .apply_if(bold, |s| s.font_weight(floem::text::Weight::BOLD))
+                        .apply_if(bold, |s| s.font_weight(floem::text::FontWeight::BOLD))
                 }),
                 label({
                     let r = sym.return_type.clone();
@@ -230,3 +230,4 @@ fn footer(symbols: RwSignal<Vec<OutlineSymbol>>) -> impl View {
             .flex_shrink(0.0)
     })
 }
+use floem::views::scroll::scroll;

@@ -11,10 +11,8 @@ use std::sync::Arc;
 
 use floem::reactive::{RwSignal, SignalGet, SignalUpdate};
 use floem::style::CursorStyle;
-use floem::views::{
-    container, dyn_stack, empty, h_stack, label, scroll, text_input, v_stack, Decorators,
-};
-use floem::View;
+use floem::views::{container, dyn_stack, empty, h_stack, label, text_input, v_stack, Decorators};
+use floem::{IntoView, View};
 
 use crate::theme::*;
 
@@ -154,7 +152,7 @@ fn results_list(
                         .padding_bottom(4.0)
                         .color(FG_3)
                         .font_size(T_MICRO)
-                        .font_weight(floem::text::Weight::BOLD)
+                        .font_weight(floem::text::FontWeight::BOLD)
                 }),))
                 .into_any(),
                 PaletteRow::Item(i, it) => palette_item_row(i, it, selected, open).into_any(),
@@ -238,7 +236,7 @@ fn palette_item_row(
             }
         }),
     ))
-    .on_event_stop(floem::event::EventListener::PointerEnter, move |_| {
+    .on_event_stop(floem::event::listener::PointerEnter, move |_cx, _info| {
         selected.set(idx);
     })
     .on_click_stop(move |_| {
@@ -297,3 +295,4 @@ fn kbd_hint(k: &'static str, lbl: &'static str) -> impl View {
     ))
     .style(|s| s.items_center())
 }
+use floem::views::scroll::scroll;

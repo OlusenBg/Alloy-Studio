@@ -5,10 +5,10 @@
 
 use std::sync::Arc;
 
-use floem::reactive::{RwSignal, SignalGet};
+use floem::reactive::{RwSignal, SignalGet, SignalUpdate};
 use floem::style::CursorStyle;
-use floem::views::{container, empty, h_stack, label, scroll, v_stack, Decorators};
-use floem::View;
+use floem::views::{container, empty, h_stack, label, v_stack, Decorators};
+use floem::{IntoView, View};
 
 use crate::panels::git_timeline::git_timeline_panel;
 use crate::panels::gradle_repair::gradle_repair_panel;
@@ -66,9 +66,9 @@ fn tab_strip(
         // spacer
         container(empty()).style(|s| s.flex_grow(1.0f32)),
         // window controls
-        icon_btn("\u{2922}", move |_| (on_maximize)()),
-        icon_btn("\u{2227}", |_| {}),
-        icon_btn("\u{00D7}", move |_| (on_close)()),
+        icon_btn("\u{2922}", move || (on_maximize)()),
+        icon_btn("\u{2227}", || {}),
+        icon_btn("\u{00D7}", move || (on_close)()),
     ))
     .style(|s| {
         s.height(32.0)
@@ -92,7 +92,7 @@ fn tab_btn(
             let color = if active.get() == this_tab { FG_1 } else { FG_3 };
             s.color(color)
                 .font_size(T_MICRO)
-                .font_weight(floem::text::Weight::BOLD)
+                .font_weight(floem::text::FontWeight::BOLD)
         }),
         // optional badge
         {
@@ -102,7 +102,7 @@ fn tab_btn(
                         s.background(bg)
                             .color(FG_1)
                             .font_size(T_MICRO)
-                            .font_weight(floem::text::Weight::BOLD)
+                            .font_weight(floem::text::FontWeight::BOLD)
                             .border_radius(R_FULL)
                             .padding_horiz(6.0)
                             .padding_vert(1.0)
@@ -128,7 +128,7 @@ fn tab_btn(
             }
         }),
     ))
-    .style(|s| s.items_center().relative());
+    .style(|s| s.items_center());
 
     container(row)
         .on_click_stop(move |_| active.set(this_tab))
@@ -137,8 +137,7 @@ fn tab_btn(
                 .height(32.0)
                 .padding_horiz(14.0)
                 .items_center()
-                .cursor(CursorStyle::Pointer)
-                .relative();
+                .cursor(CursorStyle::Pointer);
             if active.get() == this_tab {
                 s.color(FG_1)
             } else {
@@ -147,9 +146,9 @@ fn tab_btn(
         })
 }
 
-fn icon_btn(glyph: &'static str, on_click: impl Fn(floem::event::Event) + 'static) -> impl View {
+fn icon_btn(glyph: &'static str, mut on_click: impl FnMut() + 'static) -> impl View {
     label(move || glyph.to_string())
-        .on_click_stop(on_click)
+        .on_click_stop(move |_cx| on_click())
         .style(|s| {
             s.color(FG_3)
                 .font_size(T_BASE)
@@ -358,3 +357,4 @@ fn terminal_colored_line(text: &'static str, color: floem::peniko::Color) -> imp
             .padding_vert(2.0)
     })
 }
+use floem::views::scroll::scroll;

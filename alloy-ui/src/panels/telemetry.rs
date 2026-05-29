@@ -2,9 +2,10 @@
 //!
 //! Reference: kit/TelemetryPanel.jsx.
 
-use floem::reactive::{create_rw_signal, RwSignal, SignalGet};
+use floem::peniko::Color;
+use floem::reactive::{create_rw_signal, RwSignal, SignalGet, SignalUpdate};
 use floem::style::CursorStyle;
-use floem::views::{container, dyn_stack, empty, h_stack, label, scroll, v_stack, Decorators};
+use floem::views::{container, dyn_stack, empty, h_stack, label, v_stack, Decorators};
 use floem::View;
 
 use crate::theme::*;
@@ -170,7 +171,7 @@ fn chart_card(metric: TelemetryMetric) -> impl View {
                 label(move || format!("{:.1}", value)).style(|s| {
                     s.color(ALLOY_ORANGE)
                         .font_size(T_XL)
-                        .font_weight(floem::text::Weight::BOLD)
+                        .font_weight(floem::text::FontWeight::BOLD)
                         .font_family("monospace".to_string())
                 }),
                 label({
@@ -181,7 +182,7 @@ fn chart_card(metric: TelemetryMetric) -> impl View {
                     s.color(FG_3)
                         .font_size(T_MICRO)
                         .margin_left(3.0)
-                        .self_end()
+                        .align_self(floem::taffy::style::AlignItems::FlexEnd)
                         .margin_bottom(2.0)
                 }),
             ))
@@ -228,6 +229,8 @@ fn chart_area() -> impl View {
             .height(60.0)
             .background(BG_NAVY)
             .border_radius(R_4)
-            .overflow_hidden()
+            .overflow_x(floem::taffy::style::Overflow::Hidden)
+            .overflow_y(floem::taffy::style::Overflow::Hidden)
     })
 }
+use floem::views::scroll::scroll;

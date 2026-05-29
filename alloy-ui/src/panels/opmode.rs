@@ -5,7 +5,7 @@
 use std::sync::Arc;
 
 use floem::style::CursorStyle;
-use floem::views::{container, dyn_stack, empty, h_stack, label, scroll, v_stack, Decorators};
+use floem::views::{container, dyn_stack, empty, h_stack, label, v_stack, Decorators};
 use floem::View;
 
 use crate::theme::*;
@@ -96,7 +96,7 @@ fn panel_header() -> impl View {
         label(|| "OpModes".to_string()).style(|s| {
             s.color(FG_2)
                 .font_size(T_TINY)
-                .font_weight(floem::text::Weight::BOLD)
+                .font_weight(floem::text::FontWeight::BOLD)
                 .flex_grow(1.0f32)
         }),
         label(|| "⟳".to_string()).style(|s| {
@@ -130,7 +130,7 @@ fn section_header(title: &'static str, dot_color: floem::peniko::Color, count: u
         label(move || title.to_string()).style(|s| {
             s.color(FG_3)
                 .font_size(T_MICRO)
-                .font_weight(floem::text::Weight::BOLD)
+                .font_weight(floem::text::FontWeight::BOLD)
                 .margin_right(6.0)
         }),
         label(move || count.to_string()).style(|s| s.color(FG_4).font_size(T_MICRO)),
@@ -194,7 +194,7 @@ fn opmode_row(
                 label(move || op.cls.to_string()).style(|s| {
                     s.color(FG_1)
                         .font_size(T_SMALL)
-                        .font_weight(floem::text::Weight::SEMIBOLD)
+                        .font_weight(floem::text::FontWeight::SEMI_BOLD)
                         .font_family("monospace".to_string())
                         .min_width(0.0)
                 }),
@@ -212,7 +212,7 @@ fn opmode_row(
                 .style(move |s| {
                     s.color(ALLOY_ORANGE)
                         .font_size(T_MICRO)
-                        .font_weight(floem::text::Weight::BOLD)
+                        .font_weight(floem::text::FontWeight::BOLD)
                         .padding_horiz(8.0)
                         .padding_vert(3.0)
                         .border_radius(R_4)
@@ -254,7 +254,8 @@ fn panel_footer() -> impl View {
             .padding_horiz(10.0)
             .padding_vert(8.0)
             .flex_col()
-            .gap(0.0, 4.0)
+            .col_gap(0.0)
+            .row_gap(4.0)
             .flex_shrink(0.0)
     })
 }
@@ -273,3 +274,4 @@ fn footer_new_btn(text: &'static str, color: floem::peniko::Color) -> impl View 
             .hover(|s| s.background(BG_HOVER))
     })
 }
+use floem::views::scroll::scroll;

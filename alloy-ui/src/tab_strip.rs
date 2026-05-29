@@ -6,7 +6,7 @@ use crate::theme::*;
 use floem::reactive::{RwSignal, SignalGet};
 use floem::style::CursorStyle;
 use floem::views::{container, dyn_stack, empty, h_stack, label, v_stack, Decorators};
-use floem::View;
+use floem::{IntoView, View};
 use std::sync::Arc;
 
 #[derive(Clone)]

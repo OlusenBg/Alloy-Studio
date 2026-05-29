@@ -3,7 +3,7 @@
 use crate::theme::*;
 use floem::reactive::{create_rw_signal, RwSignal, SignalGet};
 use floem::style::CursorStyle;
-use floem::views::{container, empty, h_stack, img, label, scroll, v_stack, Decorators};
+use floem::views::{container, empty, h_stack, img, label, v_stack, Decorators};
 use floem::View;
 use std::sync::Arc;
 
@@ -51,12 +51,12 @@ fn header_bar() -> impl View {
                 label(|| "ALLOY EDITOR".to_string()).style(|s| {
                     s.color(FG_1)
                         .font_size(T_2XL)
-                        .font_weight(floem::text::Weight::BOLD)
+                        .font_weight(floem::text::FontWeight::BOLD)
                 }),
                 label(|| "FOR FIRST TECH CHALLENGE".to_string()).style(|s| {
                     s.color(ALLOY_ORANGE)
                         .font_size(T_MICRO)
-                        .font_weight(floem::text::Weight::BOLD)
+                        .font_weight(floem::text::FontWeight::BOLD)
                 }),
             ))
             .style(|s| s.gap(2.0)),
@@ -81,7 +81,7 @@ fn left_column(recent: RwSignal<Vec<RecentProject>>, on_open: Arc<dyn Fn(String)
         label(|| "RECENT PROJECTS".to_string()).style(|s| {
             s.color(FG_3)
                 .font_size(T_MICRO)
-                .font_weight(floem::text::Weight::BOLD)
+                .font_weight(floem::text::FontWeight::BOLD)
                 .margin_bottom(8.0)
         }),
         scroll(
@@ -114,7 +114,7 @@ fn recent_row(p: RecentProject, on_open: Arc<dyn Fn(String)>) -> impl View {
                 label(move || name.clone()).style(|s| {
                     s.color(FG_1)
                         .font_size(T_SMALL)
-                        .font_weight(floem::text::Weight::SEMIBOLD)
+                        .font_weight(floem::text::FontWeight::SEMI_BOLD)
                 }),
                 label(move || path.clone()).style(|s| {
                     s.color(FG_3)
@@ -144,7 +144,7 @@ fn right_column(h: WelcomeHandlers) -> impl View {
         label(|| "GET STARTED".to_string()).style(|s| {
             s.color(FG_3)
                 .font_size(T_MICRO)
-                .font_weight(floem::text::Weight::BOLD)
+                .font_weight(floem::text::FontWeight::BOLD)
                 .margin_bottom(12.0)
         }),
         action_btn("Open FTC Project...", true, h.on_open.clone()),
@@ -156,7 +156,7 @@ fn right_column(h: WelcomeHandlers) -> impl View {
         label(|| "FTC RESOURCES".to_string()).style(|s| {
             s.color(FG_3)
                 .font_size(T_MICRO)
-                .font_weight(floem::text::Weight::BOLD)
+                .font_weight(floem::text::FontWeight::BOLD)
                 .margin_top(24.0)
                 .margin_bottom(12.0)
         }),
@@ -178,7 +178,8 @@ fn action_btn(text: &'static str, primary: bool, on_click: Arc<dyn Fn()>) -> imp
     container(label(move || text.to_string()).style(move |s| {
         let s = s.font_size(T_SMALL);
         if primary {
-            s.color(FG_1).font_weight(floem::text::Weight::SEMIBOLD)
+            s.color(FG_1)
+                .font_weight(floem::text::FontWeight::SEMI_BOLD)
         } else {
             s.color(FG_2)
         }
@@ -233,3 +234,4 @@ fn footer() -> impl View {
             .border_color(BG_EDGE)
     })
 }
+use floem::views::scroll::scroll;

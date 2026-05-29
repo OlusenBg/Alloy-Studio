@@ -5,7 +5,7 @@ use std::sync::Arc;
 
 use floem::reactive::{RwSignal, SignalGet};
 use floem::style::CursorStyle;
-use floem::views::{container, dyn_stack, empty, h_stack, label, scroll, v_stack, Decorators};
+use floem::views::{container, dyn_stack, empty, h_stack, label, v_stack, Decorators};
 use floem::View;
 
 use crate::theme::*;
@@ -106,7 +106,7 @@ fn warning_banner(conflicts: RwSignal<Vec<ConflictFile>>, on_abort: Arc<dyn Fn()
             .style(|s| {
                 s.color(FG_1)
                     .font_size(T_BASE)
-                    .font_weight(floem::text::Weight::BOLD)
+                    .font_weight(floem::text::FontWeight::BOLD)
             }),
             label(move || {
                 let total = conflicts.get().len();
@@ -165,7 +165,7 @@ fn conflict_card(f: ConflictFile, h: ConflictHandlers) -> impl View {
             label(move || name.clone()).style(|s| {
                 s.color(FG_1)
                     .font_size(T_BASE)
-                    .font_weight(floem::text::Weight::SEMIBOLD)
+                    .font_weight(floem::text::FontWeight::SEMI_BOLD)
             }),
             label(move || path.clone()).style(|s| {
                 s.color(FG_3)
@@ -296,7 +296,7 @@ fn status_pill(resolution: Option<Side>) -> impl View {
             };
             s.color(c)
                 .font_size(T_TINY)
-                .font_weight(floem::text::Weight::SEMIBOLD)
+                .font_weight(floem::text::FontWeight::SEMI_BOLD)
         }),
     ))
     .style(|s| s.items_center())
@@ -331,7 +331,7 @@ fn side_view(
             label(move || title.to_uppercase()).style(move |s| {
                 s.color(accent)
                     .font_size(T_MICRO)
-                    .font_weight(floem::text::Weight::BOLD)
+                    .font_weight(floem::text::FontWeight::BOLD)
                     .margin_left(8.0)
             }),
             label(move || format!(" - {} - {}", author, when))
@@ -386,7 +386,7 @@ fn side_view(
             .style(|s| {
                 s.color(FG_1)
                     .font_size(T_TINY)
-                    .font_weight(floem::text::Weight::SEMIBOLD)
+                    .font_weight(floem::text::FontWeight::SEMI_BOLD)
             }),
         )
         .on_click_stop({
@@ -457,7 +457,7 @@ fn footer_bar(conflicts: RwSignal<Vec<ConflictFile>>, h: ConflictHandlers) -> im
         container(label(|| "Continue merge".to_string()).style(|s| {
             s.color(FG_1)
                 .font_size(T_TINY)
-                .font_weight(floem::text::Weight::SEMIBOLD)
+                .font_weight(floem::text::FontWeight::SEMI_BOLD)
         }))
         .on_click_stop({
             let on_cont = h.on_continue.clone();
@@ -487,3 +487,4 @@ fn footer_bar(conflicts: RwSignal<Vec<ConflictFile>>, h: ConflictHandlers) -> im
             .width_pct(100.0)
     })
 }
+use floem::views::scroll::scroll;

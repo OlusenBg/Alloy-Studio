@@ -2,11 +2,9 @@
 //!
 //! Reference: kit/GitTimeline.jsx.
 
-use floem::reactive::{create_rw_signal, RwSignal, SignalGet};
+use floem::reactive::{create_rw_signal, RwSignal, SignalGet, SignalUpdate};
 use floem::style::CursorStyle;
-use floem::views::{
-    container, dyn_stack, empty, h_stack, label, scroll, text_input, v_stack, Decorators,
-};
+use floem::views::{container, dyn_stack, empty, h_stack, label, text_input, v_stack, Decorators};
 use floem::View;
 
 use crate::theme::*;
@@ -93,7 +91,7 @@ fn section_label(text: &'static str) -> impl View {
     label(move || text.to_string()).style(|s| {
         s.color(FG_3)
             .font_size(T_MICRO)
-            .font_weight(floem::text::Weight::BOLD)
+            .font_weight(floem::text::FontWeight::BOLD)
             .padding_bottom(6.0)
     })
 }
@@ -155,7 +153,7 @@ fn staged_row(file: StagedFile) -> impl View {
         label(move || scm_ch.to_string()).style(move |s| {
             s.color(badge_color)
                 .font_size(T_MICRO)
-                .font_weight(floem::text::Weight::BOLD)
+                .font_weight(floem::text::FontWeight::BOLD)
                 .width(14.0)
                 .items_center()
                 .justify_center()
@@ -212,14 +210,14 @@ fn commit_section(commit_msg: RwSignal<String>, status_text: RwSignal<String>) -
                 .background(ALLOY_ORANGE)
                 .color(FG_1)
                 .font_size(T_TINY)
-                .font_weight(floem::text::Weight::BOLD)
+                .font_weight(floem::text::FontWeight::BOLD)
                 .border_radius(R_4)
                 .cursor(CursorStyle::Pointer)
                 .hover(|s| s.background(ALLOY_ORANGE_DEEP))
         });
 
     let buttons = h_stack((btn_generate, spacer, btn_pull, btn_push, btn_commit))
-        .style(|s| s.items_center().gap(6.0, 0.0).margin_top(8.0));
+        .style(|s| s.items_center().col_gap(6.0).row_gap(0.0).margin_top(8.0));
 
     v_stack((msg_label, input, buttons)).style(|s| {
         s.flex_col()
@@ -322,3 +320,4 @@ fn status_bar(status_text: RwSignal<String>) -> impl View {
             .width_pct(100.0)
     })
 }
+use floem::views::scroll::scroll;

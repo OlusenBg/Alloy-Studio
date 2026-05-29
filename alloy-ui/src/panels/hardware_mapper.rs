@@ -2,9 +2,9 @@
 //!
 //! Reference: kit/HardwareMapper.jsx.
 
-use floem::reactive::{create_rw_signal, RwSignal, SignalGet};
+use floem::reactive::{create_rw_signal, RwSignal, SignalGet, SignalUpdate};
 use floem::style::CursorStyle;
-use floem::views::{container, dyn_stack, empty, h_stack, label, scroll, v_stack, Decorators};
+use floem::views::{container, dyn_stack, empty, h_stack, label, v_stack, Decorators};
 use floem::View;
 
 use crate::theme::*;
@@ -55,7 +55,7 @@ pub fn hardware_mapper_panel() -> impl View {
                 motors_hub_block(motors, status_msg),
                 servos_hub_block(servos, status_msg),
             ))
-            .style(|s| s.padding(12.0).gap(12.0, 0.0).items_start()),
+            .style(|s| s.padding(12.0).col_gap(12.0).row_gap(0.0).items_start()),
         )
         .style(|s| s.flex_grow(1.0).width_pct(100.0)),
         toolbar(motors, servos, status_msg),
@@ -74,7 +74,7 @@ fn motors_hub_block(ports: RwSignal<Vec<Port>>, status_msg: RwSignal<String>) ->
         label(|| "MOTORS".to_string()).style(|s| {
             s.color(ALLOY_ORANGE)
                 .font_size(T_TINY)
-                .font_weight(floem::text::Weight::BOLD)
+                .font_weight(floem::text::FontWeight::BOLD)
                 .margin_bottom(10.0)
         }),
         dyn_stack(
@@ -83,10 +83,10 @@ fn motors_hub_block(ports: RwSignal<Vec<Port>>, status_msg: RwSignal<String>) ->
             move |(_, port)| port_chip(port, ports, status_msg),
         )
         .style(|s| {
-            use taffy::prelude::fr;
+            use floem::taffy::prelude::fr;
             s.display(floem::style::Display::Grid)
                 .grid_template_columns([fr(1.), fr(1.)])
-                .gap(6.0, 6.0)
+                .gap(6.0)
         }),
     ))
     .style(|s| {
@@ -105,7 +105,7 @@ fn servos_hub_block(ports: RwSignal<Vec<Port>>, status_msg: RwSignal<String>) ->
         label(|| "SERVOS".to_string()).style(|s| {
             s.color(STATUS_INFO)
                 .font_size(T_TINY)
-                .font_weight(floem::text::Weight::BOLD)
+                .font_weight(floem::text::FontWeight::BOLD)
                 .margin_bottom(10.0)
         }),
         dyn_stack(
@@ -114,10 +114,10 @@ fn servos_hub_block(ports: RwSignal<Vec<Port>>, status_msg: RwSignal<String>) ->
             move |(_, port)| port_chip(port, ports, status_msg),
         )
         .style(|s| {
-            use taffy::prelude::fr;
+            use floem::taffy::prelude::fr;
             s.display(floem::style::Display::Grid)
                 .grid_template_columns([fr(1.), fr(1.), fr(1.)])
-                .gap(6.0, 6.0)
+                .gap(6.0)
         }),
     ))
     .style(|s| {
@@ -192,7 +192,7 @@ fn toolbar(
                     .border_radius(R_4)
                     .color(floem::peniko::Color::WHITE)
                     .font_size(T_SMALL)
-                    .font_weight(floem::text::Weight::SEMI_BOLD)
+                    .font_weight(floem::text::FontWeight::SEMI_BOLD)
                     .cursor(CursorStyle::Pointer)
                     .margin_right(8.0)
                     .hover(|s| s.background(ALLOY_ORANGE_DEEP))
@@ -264,3 +264,4 @@ fn status_bar(status_msg: RwSignal<String>) -> impl View {
         },
     )
 }
+use floem::views::scroll::scroll;

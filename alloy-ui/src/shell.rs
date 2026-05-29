@@ -7,9 +7,9 @@
 
 use std::sync::Arc;
 
-use floem::reactive::{create_rw_signal, RwSignal, SignalGet};
+use floem::reactive::{create_rw_signal, RwSignal, SignalGet, SignalUpdate};
 use floem::style::CursorStyle;
-use floem::views::{container, dyn_stack, empty, h_stack, label, scroll, v_stack, Decorators};
+use floem::views::{container, dyn_stack, empty, h_stack, label, v_stack, Decorators};
 use floem::View;
 
 use crate::activity_bar::{activity_bar, ActivityTab};
@@ -350,7 +350,7 @@ fn explorer(open_file: RwSignal<String>) -> impl View {
         label(|| "  ⌄ CenterStage-7842".to_string()).style(|s| {
             s.color(FG_2)
                 .font_size(T_TINY)
-                .font_weight(floem::text::Weight::BOLD)
+                .font_weight(floem::text::FontWeight::BOLD)
                 .padding_horiz(8.0)
                 .padding_vert(4.0)
         }),
@@ -387,14 +387,15 @@ fn file_row(node: TreeNode, open_file: RwSignal<String>) -> impl View {
                     .font_size(T_SMALL)
                     .color(FG_2)
                     .apply_if(is_dir, |s| {
-                        s.color(FG_1).font_weight(floem::text::Weight::SEMIBOLD)
+                        s.color(FG_1)
+                            .font_weight(floem::text::FontWeight::SEMI_BOLD)
                     })
             }),
             label(move || node.scm.map(|c| c.to_string()).unwrap_or_default())
                 .style(|s| {
                     s.font_size(T_TINY)
                         .font_family("monospace".to_string())
-                        .font_weight(floem::text::Weight::BOLD)
+                        .font_weight(floem::text::FontWeight::BOLD)
                 })
                 .style(move |s| match node.scm {
                     Some('A') => s.color(SCM_ADDED),
@@ -504,7 +505,7 @@ fn scm_sidebar() -> impl View {
             label(|| "Changes (3)".to_string()).style(|s| {
                 s.color(FG_2)
                     .font_size(T_TINY)
-                    .font_weight(floem::text::Weight::BOLD)
+                    .font_weight(floem::text::FontWeight::BOLD)
                     .padding_top(14.0)
                     .padding_bottom(6.0)
             }),
@@ -530,7 +531,7 @@ fn scm_row(file: &'static str, scm: char) -> impl View {
         label(move || scm.to_string()).style(move |s| {
             s.color(color)
                 .font_family("monospace".to_string())
-                .font_weight(floem::text::Weight::BOLD)
+                .font_weight(floem::text::FontWeight::BOLD)
                 .font_size(T_TINY)
         }),
     ))
@@ -589,7 +590,7 @@ fn ext_row(name: &'static str, id: &'static str, installed: bool) -> impl View {
             label(move || name.to_string()).style(|s| {
                 s.color(FG_1)
                     .font_size(T_SMALL)
-                    .font_weight(floem::text::Weight::SEMIBOLD)
+                    .font_weight(floem::text::FontWeight::SEMI_BOLD)
             }),
             label(move || id.to_string()).style(|s| {
                 s.color(FG_3)
@@ -677,7 +678,7 @@ fn code_placeholder(open_file: RwSignal<String>) -> impl View {
             label(move || open_file.get()).style(|s| {
                 s.color(FG_4)
                     .font_size(T_3XL)
-                    .font_weight(floem::text::Weight::BOLD)
+                    .font_weight(floem::text::FontWeight::BOLD)
                     .font_family("monospace".to_string())
             }),
             label(|| "Code editor  —  coming soon".to_string())
@@ -701,7 +702,7 @@ fn panel_header(title: &'static str) -> impl View {
         s.flex_grow(1.0f32)
             .color(FG_2)
             .font_size(T_TINY)
-            .font_weight(floem::text::Weight::BOLD)
+            .font_weight(floem::text::FontWeight::BOLD)
     }),))
     .style(|s| {
         s.height(36.0)
@@ -712,3 +713,4 @@ fn panel_header(title: &'static str) -> impl View {
             .flex_shrink(0.0)
     })
 }
+use floem::views::scroll::scroll;

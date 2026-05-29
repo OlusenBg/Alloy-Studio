@@ -3,7 +3,7 @@
 //! Reference: kit/ActivityBar.jsx.
 
 use crate::theme::*;
-use floem::reactive::{RwSignal, SignalGet};
+use floem::reactive::{RwSignal, SignalGet, SignalUpdate};
 use floem::style::CursorStyle;
 use floem::views::{container, empty, img, label, v_stack, Decorators};
 use floem::View;
@@ -97,7 +97,6 @@ fn activity_btn(
             .items_center()
             .justify_center()
             .cursor(CursorStyle::Pointer)
-            .relative()
             .hover(|s| s.background(BG_HOVER))
     })
 }

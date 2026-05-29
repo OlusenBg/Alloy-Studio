@@ -10,9 +10,7 @@ use std::sync::Arc;
 
 use floem::reactive::{create_rw_signal, RwSignal, SignalGet, SignalUpdate};
 use floem::style::CursorStyle;
-use floem::views::{
-    container, dyn_stack, empty, h_stack, label, scroll, text_input, v_stack, Decorators,
-};
+use floem::views::{container, dyn_stack, empty, h_stack, label, text_input, v_stack, Decorators};
 use floem::View;
 
 use crate::theme::*;
@@ -169,7 +167,6 @@ fn top_bar(
             .border_bottom(1.0)
             .border_color(BG_EDGE)
             .background(BG_SURFACE)
-            .relative()
     })
 }
 
@@ -238,7 +235,7 @@ fn section(
             label(move || label_text.to_string()).style(|s| {
                 s.color(FG_2)
                     .font_size(T_MICRO)
-                    .font_weight(floem::text::Weight::BOLD)
+                    .font_weight(floem::text::FontWeight::BOLD)
             }),
             label(move || files.get().len().to_string()).style(|s| {
                 s.color(FG_4)
@@ -277,7 +274,7 @@ fn file_row(f: ChangedFile, staged: bool, on_each: Arc<dyn Fn(String)>) -> impl 
         label(move || status_letter.to_string()).style(move |s| {
             s.color(status_color)
                 .font_family("monospace".to_string())
-                .font_weight(floem::text::Weight::BOLD)
+                .font_weight(floem::text::FontWeight::BOLD)
                 .font_size(T_TINY)
                 .width(14.0)
         }),
@@ -343,7 +340,7 @@ fn commit_area(sigs: SourceControlSignals, h: SourceControlHandlers) -> impl Vie
         label(|| "COMMIT MESSAGE".to_string()).style(|s| {
             s.color(FG_3)
                 .font_size(T_MICRO)
-                .font_weight(floem::text::Weight::BOLD)
+                .font_weight(floem::text::FontWeight::BOLD)
         }),
         text_input(msg).keyboard_navigable().style(|s| {
             s.width_pct(100.0)
@@ -406,7 +403,7 @@ fn right_pane(s: SourceControlSignals) -> impl View {
             label(move || format!("COMMIT HISTORY - {}", branch.get().to_uppercase())).style(|s| {
                 s.color(FG_3)
                     .font_size(T_MICRO)
-                    .font_weight(floem::text::Weight::BOLD)
+                    .font_weight(floem::text::FontWeight::BOLD)
             }),
             container(empty()).style(|s| s.flex_grow(1.0f32)),
             text_input(filter)
@@ -474,7 +471,7 @@ fn timeline(history: RwSignal<Vec<CommitNodeData>>, filter: RwSignal<String>) ->
         )
         .style(|s| s.flex_col().padding_left(24.0).width_pct(100.0)),
     )))
-    .style(|s| s.relative().width_pct(100.0))
+    .style(|s| s.width_pct(100.0))
 }
 
 fn commit_node(c: CommitNodeData) -> impl View {
@@ -505,7 +502,7 @@ fn commit_node(c: CommitNodeData) -> impl View {
         container(label(move || avatar_initials.clone()).style(|s| {
             s.color(floem::peniko::Color::BLACK)
                 .font_size(T_MICRO)
-                .font_weight(floem::text::Weight::BOLD)
+                .font_weight(floem::text::FontWeight::BOLD)
         }))
         .style(move |s| {
             s.width(20.0)
@@ -731,7 +728,7 @@ fn small_primary_btn_with_count(
         label(move || format!("{} {}", text, count.get())).style(|s| {
             s.color(FG_1)
                 .font_size(T_TINY)
-                .font_weight(floem::text::Weight::SEMIBOLD)
+                .font_weight(floem::text::FontWeight::SEMI_BOLD)
         }),
     )
     .on_click_stop(move |_| (on_click)())
@@ -783,7 +780,7 @@ fn primary_btn_grow(text: &'static str, on_click: Arc<dyn Fn()>) -> impl View {
     container(label(move || text.to_string()).style(|s| {
         s.color(FG_1)
             .font_size(T_TINY)
-            .font_weight(floem::text::Weight::SEMIBOLD)
+            .font_weight(floem::text::FontWeight::SEMI_BOLD)
     }))
     .on_click_stop(move |_| (on_click)())
     .style(|s| {
@@ -799,3 +796,4 @@ fn primary_btn_grow(text: &'static str, on_click: Arc<dyn Fn()>) -> impl View {
             .hover(|s| s.background(ALLOY_ORANGE_DEEP))
     })
 }
+use floem::views::scroll::scroll;

@@ -4,7 +4,7 @@ use crate::theme::*;
 use floem::reactive::{RwSignal, SignalGet};
 use floem::style::CursorStyle;
 use floem::views::{container, dyn_stack, empty, h_stack, label, v_stack, Decorators};
-use floem::View;
+use floem::{IntoView, View};
 use std::sync::Arc;
 
 #[derive(Clone, Copy, PartialEq)]
@@ -37,7 +37,11 @@ pub fn toast_overlay(toasts: RwSignal<Vec<ToastEntry>>, on_dismiss: Arc<dyn Fn(u
             move |t| toast_card(t, dismiss.clone())
         })
         .style(|s| s.flex_col().gap(8.0).width_pct(100.0)),))
-        .style(|s| s.flex_col_rev().gap(8.0).width(360.0)),
+        .style(|s| {
+            s.flex_direction(floem::taffy::style::FlexDirection::ColumnReverse)
+                .gap(8.0)
+                .width(360.0)
+        }),
     )
     .style(move |s| {
         let s = s
@@ -71,15 +75,13 @@ fn toast_card(t: ToastEntry, on_dismiss: Arc<dyn Fn(u64)>) -> impl View {
                 container(label(move || icon.to_string()).style(move |s| {
                     s.color(accent)
                         .font_size(T_TINY)
-                        .font_weight(floem::text::Weight::BOLD)
+                        .font_weight(floem::text::FontWeight::BOLD)
                 }))
                 .style(move |s| {
                     s.width(18.0)
                         .height(18.0)
                         .border_radius(R_FULL)
-                        .background(floem::peniko::Color::from_rgba8(
-                            accent.r, accent.g, accent.b, 0x22,
-                        ))
+                        .background(accent.with_alpha(0x22 as f32 / 255.0))
                         .items_center()
                         .justify_center()
                         .flex_shrink(0.0)
@@ -88,7 +90,7 @@ fn toast_card(t: ToastEntry, on_dismiss: Arc<dyn Fn(u64)>) -> impl View {
                     label(move || title.clone()).style(|s| {
                         s.color(FG_1)
                             .font_size(T_SMALL)
-                            .font_weight(floem::text::Weight::SEMIBOLD)
+                            .font_weight(floem::text::FontWeight::SEMI_BOLD)
                     }),
                     label(move || body.clone())
                         .style(|s| s.color(FG_3).font_size(T_TINY).margin_top(2.0)),
@@ -110,7 +112,7 @@ fn toast_card(t: ToastEntry, on_dismiss: Arc<dyn Fn(u64)>) -> impl View {
                     container(label(move || a.label.clone()).style(|s| {
                         s.color(FG_1)
                             .font_size(T_TINY)
-                            .font_weight(floem::text::Weight::SEMIBOLD)
+                            .font_weight(floem::text::FontWeight::SEMI_BOLD)
                     }))
                     .on_click_stop(move |_| (a.on_click)())
                     .style(|s| {

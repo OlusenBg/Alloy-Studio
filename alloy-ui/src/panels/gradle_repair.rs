@@ -2,9 +2,9 @@
 //!
 //! Reference: kit/GradleRepair.jsx.
 
-use floem::reactive::{create_rw_signal, RwSignal, SignalGet};
+use floem::reactive::{create_rw_signal, RwSignal, SignalGet, SignalUpdate};
 use floem::style::CursorStyle;
-use floem::views::{container, dyn_stack, empty, h_stack, label, scroll, v_stack, Decorators};
+use floem::views::{container, dyn_stack, empty, h_stack, label, v_stack, Decorators};
 use floem::View;
 
 use crate::theme::*;
@@ -131,7 +131,7 @@ fn repair_card(build_state: RwSignal<BuildState>, fix_applied: RwSignal<bool>) -
                 label(|| "Alloy AI · Proposed Fix".to_string()).style(|s| {
                     s.color(ALLOY_ORANGE)
                         .font_size(T_TINY)
-                        .font_weight(floem::text::Weight::BOLD)
+                        .font_weight(floem::text::FontWeight::BOLD)
                 }),
             )
             .style(|s| {
@@ -191,7 +191,7 @@ fn repair_card(build_state: RwSignal<BuildState>, fix_applied: RwSignal<bool>) -
                             .border_radius(R_4)
                             .color(floem::peniko::Color::WHITE)
                             .font_size(T_SMALL)
-                            .font_weight(floem::text::Weight::SEMI_BOLD)
+                            .font_weight(floem::text::FontWeight::SEMI_BOLD)
                             .cursor(CursorStyle::Pointer)
                             .margin_right(8.0)
                     }),
@@ -266,7 +266,7 @@ fn footer(build_state: RwSignal<BuildState>) -> impl View {
                     .border_radius(R_4)
                     .color(floem::peniko::Color::WHITE)
                     .font_size(T_SMALL)
-                    .font_weight(floem::text::Weight::SEMI_BOLD)
+                    .font_weight(floem::text::FontWeight::SEMI_BOLD)
                     .cursor(CursorStyle::Pointer)
                     .margin_right(8.0)
                     .hover(|s| s.background(ALLOY_ORANGE_DEEP))
@@ -305,3 +305,4 @@ fn footer(build_state: RwSignal<BuildState>) -> impl View {
             .flex_shrink(0.0)
     })
 }
+use floem::views::scroll::scroll;

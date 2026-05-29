@@ -7,9 +7,7 @@ use std::sync::Arc;
 
 use floem::reactive::{create_rw_signal, RwSignal, SignalGet, SignalUpdate};
 use floem::style::CursorStyle;
-use floem::views::{
-    container, dyn_stack, empty, h_stack, label, scroll, text_input, v_stack, Decorators,
-};
+use floem::views::{container, dyn_stack, empty, h_stack, label, text_input, v_stack, Decorators};
 use floem::View;
 
 use crate::theme::*;
@@ -81,7 +79,7 @@ fn left_rail(active_cat: RwSignal<SettingsCategory>) -> impl View {
         label(|| "SETTINGS".to_string()).style(|s| {
             s.color(FG_3)
                 .font_size(T_MICRO)
-                .font_weight(floem::text::Weight::BOLD)
+                .font_weight(floem::text::FontWeight::BOLD)
                 .padding_horiz(10.0)
                 .padding_top(4.0)
                 .padding_bottom(8.0)
@@ -241,7 +239,7 @@ fn page_h1(title: &'static str, sub: &'static str) -> impl View {
         label(move || title.to_string()).style(|s| {
             s.color(FG_1)
                 .font_size(T_3XL)
-                .font_weight(floem::text::Weight::BOLD)
+                .font_weight(floem::text::FontWeight::BOLD)
         }),
         label(move || sub.to_string()).style(|s| s.color(FG_3).font_size(T_SMALL).margin_top(6.0)),
     ))
@@ -253,7 +251,7 @@ fn group<C: View + 'static>(title: &'static str, children: C) -> impl View {
         label(move || title.to_string()).style(|s| {
             s.color(FG_3)
                 .font_size(T_MICRO)
-                .font_weight(floem::text::Weight::BOLD)
+                .font_weight(floem::text::FontWeight::BOLD)
                 .margin_bottom(10.0)
                 .padding_bottom(6.0)
                 .width_pct(100.0)
@@ -271,7 +269,7 @@ fn field<C: View + 'static>(label_text: &'static str, hint: &'static str, contro
             label(move || label_text.to_string()).style(|s| {
                 s.color(FG_1)
                     .font_size(T_SMALL)
-                    .font_weight(floem::text::Weight::MEDIUM)
+                    .font_weight(floem::text::FontWeight::MEDIUM)
             }),
             label(move || hint.to_string()).style(move |s| {
                 let s = s
@@ -649,7 +647,7 @@ fn extension_card(name: &'static str, id: &'static str, ver: &'static str) -> im
             label(move || name.to_string()).style(|s| {
                 s.color(FG_1)
                     .font_size(T_SMALL)
-                    .font_weight(floem::text::Weight::SEMIBOLD)
+                    .font_weight(floem::text::FontWeight::SEMI_BOLD)
             }),
             label(move || format!("{id} · v{ver}")).style(|s| {
                 s.color(FG_3)
@@ -729,13 +727,13 @@ fn about_page() -> impl View {
             label(|| "ALLOY EDITOR".to_string()).style(|s| {
                 s.color(FG_1)
                     .font_size(T_4XL)
-                    .font_weight(floem::text::Weight::BOLD)
+                    .font_weight(floem::text::FontWeight::BOLD)
                     .margin_top(16.0)
             }),
             label(|| "v0.1.0-alpha · built for FIRST Tech Challenge".to_string()).style(|s| {
                 s.color(ALLOY_ORANGE)
                     .font_size(T_TINY)
-                    .font_weight(floem::text::Weight::SEMIBOLD)
+                    .font_weight(floem::text::FontWeight::SEMI_BOLD)
                     .margin_top(8.0)
             }),
             h_stack((
@@ -796,7 +794,7 @@ fn primary_btn_sm(text: &'static str) -> impl View {
     container(label(move || text.to_string()).style(|s| {
         s.color(FG_1)
             .font_size(T_TINY)
-            .font_weight(floem::text::Weight::SEMIBOLD)
+            .font_weight(floem::text::FontWeight::SEMI_BOLD)
     }))
     .style(|s| {
         s.padding_horiz(12.0)
@@ -820,3 +818,4 @@ fn panel_btn_sm(text: &'static str) -> impl View {
         },
     )
 }
+use floem::views::scroll::scroll;
