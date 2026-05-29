@@ -44,7 +44,10 @@ jobs:
         run: cargo clippy --workspace --exclude alloy-ui --all-targets -- -D clippy::all -A clippy::too_many_arguments
 
       - name: Clippy (alloy-ui — UI crate, warnings only)
-        run: cargo clippy -p alloy-ui -- -A clippy::all
+        run: RUSTFLAGS="" cargo clippy -p alloy-ui -- -A clippy::all
+
+      - name: Build alloy-ui (warnings allowed)
+        run: RUSTFLAGS="" cargo build -p alloy-ui
 
       - name: Test
         run: cargo test --workspace --exclude alloy-ui --locked
