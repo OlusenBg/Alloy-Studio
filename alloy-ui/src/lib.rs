@@ -3,6 +3,7 @@
 //! Everything visual specific to Alloy lives here.
 //! `theme` is the single source of truth for design tokens.
 
+pub mod bridge;
 pub mod theme;
 
 // ── Chrome ────────────────────────────────────────────────────────────────────

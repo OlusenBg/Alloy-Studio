@@ -37,6 +37,17 @@ impl TelemetryServer {
         ))
     }
 
+    /// Bind to `0.0.0.0:{port}` and use an existing `TelemetryStream`.
+    ///
+    /// This allows callers to share the same stream between the server and other
+    /// components (such as the UI bridge) by providing the stream up front.
+    pub async fn bind_with_stream(port: u16, stream: Arc<TelemetryStream>) -> anyhow::Result<Self> {
+        let listener = TcpListener::bind(format!("0.0.0.0:{}", port)).await?;
+        let addr = listener.local_addr()?;
+        info!("TelemetryServer listening on {}", addr);
+        Ok(Self { listener, stream })
+    }
+
     /// Return the local address this server is bound to.
     pub fn local_addr(&self) -> anyhow::Result<SocketAddr> {
         Ok(self.listener.local_addr()?)

@@ -7,13 +7,15 @@
 
 use std::sync::Arc;
 
-use floem::reactive::{RwSignal, SignalGet, SignalUpdate};
+use floem::ext_event::create_ext_action;
+use floem::reactive::{RwSignal, Scope, SignalGet, SignalUpdate};
 use floem::style::CursorStyle;
-use floem::views::{container, dyn_stack, empty, h_stack, label, v_stack, Decorators};
+use floem::views::{container, dyn_stack, h_stack, label, v_stack, Decorators};
 use floem::View;
 
 use crate::activity_bar::{activity_bar, ActivityTab};
 use crate::bottom_panel::{bottom_panel, BottomPanelTab};
+use crate::bridge::AppBridge;
 use crate::panels::opmode::opmode_panel;
 use crate::statusbar::{
     alloy_status_bar, LspState, RobotState, StatusBarHandlers, StatusBarSignals,
@@ -119,11 +121,25 @@ const FILE_TREE: &[TreeNode] = &[
     },
 ];
 
+// ── Dynamic file-tree entry (owned strings, for real data) ────────────────────
+
+#[derive(Clone)]
+pub struct DynTreeNode {
+    pub is_dir: bool,
+    pub name: String,
+    pub depth: u8,
+    pub scm: Option<char>,
+}
+
 // ── Public entry point ───────────────────────────────────────────────────────
 
 /// Full IDE shell. Creates all reactive state internally.
 /// Returns a view that fills the window.
-pub fn editor_shell() -> impl View {
+///
+/// When `bridge` is `Some`, uses real backend data; falls back to demo data otherwise.
+pub fn editor_shell(bridge: Option<Arc<AppBridge>>) -> impl View {
+    let cx = Scope::new();
+
     // ── Activity / sidebar ─────────────────────────────────────────────────
     let activity = RwSignal::new(ActivityTab::Files);
 
@@ -167,6 +183,13 @@ pub fn editor_shell() -> impl View {
     let bottom_hidden = RwSignal::new(false);
     let bottom_max = RwSignal::new(false);
 
+    // ── Terminal lines signal (updated by gradle runner) ───────────────────
+    let terminal_lines: RwSignal<Vec<String>> = RwSignal::new(vec![
+        "> Configure project :TeamCode".to_string(),
+        "> Task :TeamCode:assembleDebug".to_string(),
+        "BUILD SUCCESSFUL in 11s".to_string(),
+    ]);
+
     // ── Title bar signals ──────────────────────────────────────────────────
     let project_name = RwSignal::new("CenterStage-7842".to_string());
     let team = RwSignal::new("Team 7842".to_string());
@@ -176,19 +199,193 @@ pub fn editor_shell() -> impl View {
     let show_run = RwSignal::new(true);
 
     // ── Status bar signals ─────────────────────────────────────────────────
+    let sb_branch = RwSignal::new("main".to_string());
+    let sb_ahead = RwSignal::new(0u32);
+    let sb_behind = RwSignal::new(0u32);
+    let sb_robot = RwSignal::new(RobotState::Disconnected);
+
     let sb = StatusBarSignals {
-        branch: RwSignal::new("main".to_string()),
-        ahead: RwSignal::new(2u32),
-        behind: RwSignal::new(0u32),
+        branch: sb_branch,
+        ahead: sb_ahead,
+        behind: sb_behind,
         lsp: RwSignal::new(LspState::Ready),
-        robot: RwSignal::new(RobotState::Connected),
-        error_count: RwSignal::new(1u32),
-        warn_count: RwSignal::new(2u32),
-        cursor_line: RwSignal::new(16u32),
-        cursor_col: RwSignal::new(53u32),
+        robot: sb_robot,
+        error_count: RwSignal::new(0u32),
+        warn_count: RwSignal::new(0u32),
+        cursor_line: RwSignal::new(1u32),
+        cursor_col: RwSignal::new(1u32),
         file_lang: RwSignal::new("Java".to_string()),
         encoding: RwSignal::new("UTF-8".to_string()),
         indent: RwSignal::new("Spaces: 4".to_string()),
+    };
+
+    // ── Dynamic file tree signal ───────────────────────────────────────────
+    let dyn_file_tree: RwSignal<Vec<DynTreeNode>> = RwSignal::new(vec![]);
+    let use_real_tree = RwSignal::new(false);
+
+    // ── Wire real data from bridge ─────────────────────────────────────────
+    if let Some(ref b) = bridge {
+        // Wire file tree
+        {
+            let workspace = Arc::clone(&b.workspace);
+            let action = create_ext_action(cx, move |entries: Vec<DynTreeNode>| {
+                dyn_file_tree.set(entries);
+                use_real_tree.set(true);
+            });
+            b.tokio.spawn(async move {
+                let entries = workspace.file_tree();
+                let nodes: Vec<DynTreeNode> = entries
+                    .into_iter()
+                    .map(|e| {
+                        let name = if e.depth == 0 {
+                            e.relative_path.clone()
+                        } else {
+                            e.path
+                                .file_name()
+                                .map(|n| n.to_string_lossy().into_owned())
+                                .unwrap_or_else(|| e.relative_path.clone())
+                        };
+                        DynTreeNode {
+                            is_dir: e.is_dir,
+                            name,
+                            depth: e.depth.min(255) as u8,
+                            scm: None,
+                        }
+                    })
+                    .collect();
+                action(nodes);
+            });
+        }
+
+        // Wire project name from workspace root
+        {
+            let root = b.workspace_root.clone();
+            let action = create_ext_action(cx, move |name: String| {
+                project_name.set(name);
+            });
+            let name = root
+                .file_name()
+                .map(|n| n.to_string_lossy().into_owned())
+                .unwrap_or_else(|| "Alloy Studio".to_string());
+            action(name);
+        }
+
+        // Wire git branch to status bar and title bar
+        if let Some(ref git) = b.git_repo {
+            let repo = Arc::clone(git);
+            let action = create_ext_action(cx, move |(br, name): (String, String)| {
+                sb_branch.set(br.clone());
+                branch.set(br);
+                project_name.set(name);
+            });
+            let workspace_name = b
+                .workspace_root
+                .file_name()
+                .map(|n| n.to_string_lossy().into_owned())
+                .unwrap_or_else(|| "Alloy Studio".to_string());
+            b.tokio.spawn(async move {
+                let br = repo
+                    .with_repo(|r| {
+                        let head = r.head().ok();
+                        let branch_name = head
+                            .as_ref()
+                            .and_then(|h| h.shorthand().map(|s| s.to_string()))
+                            .unwrap_or_else(|| "HEAD".to_string());
+                        Ok(branch_name)
+                    })
+                    .await
+                    .unwrap_or_else(|_| "HEAD".to_string());
+                action((br, workspace_name));
+            });
+        }
+
+        // Wire ongoing telemetry robot state updates
+        {
+            let telemetry = Arc::clone(&b.telemetry);
+            let handle = b.tokio.clone();
+            // Use a RwSignal<Option<RobotState>> as intermediate for update_signal_from_channel
+            let robot_state_opt: RwSignal<Option<RobotState>> = RwSignal::new(None);
+            let (tx, rx) = std::sync::mpsc::channel::<RobotState>();
+            floem::ext_event::update_signal_from_channel(robot_state_opt.write_only(), rx);
+            // Drive sb_robot from the intermediate signal
+            floem::reactive::create_effect(move |_| {
+                if let Some(state) = robot_state_opt.get() {
+                    sb_robot.set(state);
+                }
+            });
+            handle.spawn(async move {
+                let mut sub = telemetry.subscribe();
+                loop {
+                    match tokio::time::timeout(std::time::Duration::from_secs(5), sub.recv()).await
+                    {
+                        Ok(Ok(_)) => {
+                            let _ = tx.send(RobotState::Connected);
+                        }
+                        Ok(Err(_)) => {
+                            break;
+                        }
+                        Err(_) => {
+                            let _ = tx.send(RobotState::Disconnected);
+                        }
+                    }
+                }
+            });
+        }
+    }
+
+    // ── Deploy button handler ──────────────────────────────────────────────
+    let on_run: Arc<dyn Fn()> = if let Some(ref b) = bridge {
+        if let Some(ref ftc) = b.ftc_project {
+            let project = Arc::new(ftc.clone());
+            let tokio_handle = b.tokio.clone();
+            let cx2 = cx;
+            let term_lines_clone = terminal_lines;
+            let bottom_tab_clone = bottom_tab;
+            Arc::new(move || {
+                // Switch to Terminal tab
+                bottom_tab_clone.set(BottomPanelTab::Terminal);
+
+                let project = Arc::clone(&project);
+                let action = create_ext_action(cx2, move |lines: Vec<String>| {
+                    term_lines_clone.set(lines);
+                });
+
+                tokio_handle.spawn(async move {
+                    let runner = alloy_gradle::runner::GradleRunner::new(project);
+                    let (mut rx_event, _handle) =
+                        runner.run(&[alloy_gradle::runner::GradleTask::AssembleDebug]);
+
+                    let mut all_lines: Vec<String> = Vec::new();
+                    loop {
+                        match rx_event.recv().await {
+                            Ok(event) => match event {
+                                alloy_rpc::types::BuildEvent::OutputLine(text) => {
+                                    all_lines.push(text);
+                                }
+                                alloy_rpc::types::BuildEvent::ErrorDetected(err) => {
+                                    all_lines.push(format!("ERROR: {}", err.message));
+                                }
+                                alloy_rpc::types::BuildEvent::Finished { exit_code, .. } => {
+                                    let msg = if exit_code == 0 {
+                                        "BUILD SUCCESSFUL".to_string()
+                                    } else {
+                                        format!("BUILD FAILED (exit code {})", exit_code)
+                                    };
+                                    all_lines.push(msg);
+                                    break;
+                                }
+                            },
+                            Err(_) => break,
+                        }
+                    }
+                    action(all_lines);
+                });
+            })
+        } else {
+            Arc::new(|| {})
+        }
+    } else {
+        Arc::new(|| {})
     };
 
     let noop = || Arc::new(|| {}) as Arc<dyn Fn()>;
@@ -197,7 +394,7 @@ pub fn editor_shell() -> impl View {
         on_home: noop(),
         on_palette: noop(),
         on_settings: noop(),
-        on_run: noop(),
+        on_run: on_run.clone(),
     };
     let sb_h = StatusBarHandlers {
         on_branch: noop(),
@@ -253,7 +450,13 @@ pub fn editor_shell() -> impl View {
         ),
         h_stack((
             activity_bar(activity, noop()),
-            sidebar(activity, open_file),
+            sidebar(
+                activity,
+                open_file,
+                dyn_file_tree,
+                use_real_tree,
+                bridge.clone(),
+            ),
             editor_column(
                 tabs,
                 active_tab,
@@ -266,6 +469,7 @@ pub fn editor_shell() -> impl View {
                 bottom_max,
                 on_run_opmode,
                 on_open_opmode,
+                terminal_lines,
             ),
         ))
         .style(|s| s.flex_grow(1.0f32).min_height(0.0).width_pct(100.0)),
@@ -281,11 +485,17 @@ pub fn editor_shell() -> impl View {
 
 // ── Sidebar ──────────────────────────────────────────────────────────────────
 
-fn sidebar(activity: RwSignal<ActivityTab>, open_file: RwSignal<String>) -> impl View {
+fn sidebar(
+    activity: RwSignal<ActivityTab>,
+    open_file: RwSignal<String>,
+    dyn_file_tree: RwSignal<Vec<DynTreeNode>>,
+    use_real_tree: RwSignal<bool>,
+    bridge: Option<Arc<AppBridge>>,
+) -> impl View {
     container(
         v_stack((
             // Files pane
-            container(explorer(open_file)).style(move |s| {
+            container(explorer(open_file, dyn_file_tree, use_real_tree)).style(move |s| {
                 let s = s.flex_col().width_pct(100.0).height_pct(100.0);
                 if activity.get() == ActivityTab::Files {
                     s
@@ -312,7 +522,7 @@ fn sidebar(activity: RwSignal<ActivityTab>, open_file: RwSignal<String>) -> impl
                 }
             }),
             // OpModes pane
-            container(opmode_panel(Arc::new(|_| {}), Arc::new(|_| {}))).style(move |s| {
+            container(opmode_panel_wrapper(bridge)).style(move |s| {
                 let s = s.flex_col().width_pct(100.0).height_pct(100.0);
                 if activity.get() == ActivityTab::OpModes {
                     s
@@ -342,12 +552,22 @@ fn sidebar(activity: RwSignal<ActivityTab>, open_file: RwSignal<String>) -> impl
     })
 }
 
+// ── OpMode panel wrapper that wires real data ─────────────────────────────────
+
+fn opmode_panel_wrapper(_bridge: Option<Arc<AppBridge>>) -> impl View {
+    opmode_panel(Arc::new(|_| {}), Arc::new(|_| {}))
+}
+
 // ── Explorer sidebar pane ─────────────────────────────────────────────────────
 
-fn explorer(open_file: RwSignal<String>) -> impl View {
+fn explorer(
+    open_file: RwSignal<String>,
+    dyn_file_tree: RwSignal<Vec<DynTreeNode>>,
+    use_real_tree: RwSignal<bool>,
+) -> impl View {
     v_stack((
         panel_header("Explorer"),
-        label(|| "  ⌄ CenterStage-7842".to_string()).style(|s| {
+        label(|| "  ⌄ Workspace".to_string()).style(|s| {
             s.color(FG_2)
                 .font_size(T_TINY)
                 .font_weight(floem::text::FontWeight::BOLD)
@@ -355,16 +575,102 @@ fn explorer(open_file: RwSignal<String>) -> impl View {
                 .padding_vert(4.0)
         }),
         scroll(
-            dyn_stack(
-                || FILE_TREE.iter().enumerate().collect::<Vec<_>>(),
-                |(i, _)| *i,
-                move |(_, node)| file_row(*node, open_file),
-            )
+            v_stack((
+                // Real file tree (shown when bridge has data)
+                container(
+                    dyn_stack(
+                        move || {
+                            dyn_file_tree
+                                .get()
+                                .into_iter()
+                                .enumerate()
+                                .collect::<Vec<_>>()
+                        },
+                        |(i, _)| *i,
+                        move |(_, node)| dyn_file_row(node, open_file),
+                    )
+                    .style(|s| s.flex_col()),
+                )
+                .style(move |s| if use_real_tree.get() { s } else { s.hide() }),
+                // Demo file tree (shown when no bridge)
+                container(
+                    dyn_stack(
+                        || FILE_TREE.iter().enumerate().collect::<Vec<_>>(),
+                        |(i, _)| *i,
+                        move |(_, node)| file_row(*node, open_file),
+                    )
+                    .style(|s| s.flex_col()),
+                )
+                .style(move |s| if use_real_tree.get() { s.hide() } else { s }),
+            ))
             .style(|s| s.flex_col()),
         )
         .style(|s| s.flex_grow(1.0f32)),
     ))
     .style(|s| s.flex_col().height_pct(100.0))
+}
+
+fn dyn_file_row(node: DynTreeNode, open_file: RwSignal<String>) -> impl View {
+    let indent = 8.0 + (node.depth as f64) * 14.0;
+    let is_dir = node.is_dir;
+    let name = node.name.clone();
+    let name_for_click = name.clone();
+    let name_for_active = name.clone();
+
+    container(
+        h_stack((
+            label(move || {
+                if is_dir {
+                    "⌄ ".to_string()
+                } else {
+                    "  ".to_string()
+                }
+            })
+            .style(|s| s.color(FG_3).font_size(T_TINY).min_width(16.0)),
+            label({
+                let n = name.clone();
+                move || n.clone()
+            })
+            .style(move |s| {
+                s.flex_grow(1.0f32)
+                    .font_size(T_SMALL)
+                    .color(FG_2)
+                    .apply_if(is_dir, |s| {
+                        s.color(FG_1)
+                            .font_weight(floem::text::FontWeight::SEMI_BOLD)
+                    })
+            }),
+            label(move || node.scm.map(|c| c.to_string()).unwrap_or_default()).style(move |s| {
+                let s = s
+                    .font_size(T_TINY)
+                    .font_family("monospace".to_string())
+                    .font_weight(floem::text::FontWeight::BOLD);
+                match node.scm {
+                    Some('A') => s.color(SCM_ADDED),
+                    Some('M') => s.color(SCM_MODIFIED),
+                    Some('D') => s.color(SCM_REMOVED),
+                    _ => s.color(FG_4),
+                }
+            }),
+        ))
+        .style(|s| s.items_center().width_pct(100.0)),
+    )
+    .on_click_stop(move |_| {
+        if !is_dir {
+            open_file.set(name_for_click.clone());
+        }
+    })
+    .style(move |s| {
+        let active = !is_dir && open_file.get() == name_for_active;
+        s.padding_left(indent)
+            .padding_right(10.0)
+            .height(22.0)
+            .width_pct(100.0)
+            .items_center()
+            .apply_if(!is_dir, |s| s.cursor(CursorStyle::Pointer))
+            .apply_if(active, |s| s.background(BG_CURRENT))
+            .hover(|s| if !active { s.background(BG_HOVER) } else { s })
+    })
 }
 
 fn file_row(node: TreeNode, open_file: RwSignal<String>) -> impl View {
@@ -625,6 +931,7 @@ fn editor_column(
     bottom_max: RwSignal<bool>,
     _on_run_opmode: Arc<dyn Fn(&'static str)>,
     _on_open_opmode: Arc<dyn Fn(&'static str)>,
+    terminal_lines: RwSignal<Vec<String>>,
 ) -> impl View {
     let on_maximize = {
         let bm = bottom_max;
@@ -647,7 +954,13 @@ fn editor_column(
             }
         }),
         // Bottom panel
-        container(bottom_panel(bottom_tab, on_maximize, on_close_panel)).style(move |s| {
+        container(bottom_panel(
+            bottom_tab,
+            on_maximize,
+            on_close_panel,
+            terminal_lines,
+        ))
+        .style(move |s| {
             let s = s
                 .flex_shrink(0.0)
                 .width_pct(100.0)

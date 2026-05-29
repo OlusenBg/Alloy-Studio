@@ -7,7 +7,7 @@ use std::sync::Arc;
 
 use floem::reactive::{RwSignal, SignalGet, SignalUpdate};
 use floem::style::CursorStyle;
-use floem::views::{container, empty, h_stack, label, v_stack, Decorators};
+use floem::views::{container, dyn_stack, empty, h_stack, label, v_stack, Decorators};
 use floem::{IntoView, View};
 
 use crate::panels::git_timeline::git_timeline_panel;
@@ -30,8 +30,13 @@ pub fn bottom_panel(
     tab: RwSignal<BottomPanelTab>,
     on_maximize: Arc<dyn Fn()>,
     on_close: Arc<dyn Fn()>,
+    terminal_lines: RwSignal<Vec<String>>,
 ) -> impl View {
-    v_stack((tab_strip(tab, on_maximize, on_close), content_area(tab))).style(|s| {
+    v_stack((
+        tab_strip(tab, on_maximize, on_close),
+        content_area(tab, terminal_lines),
+    ))
+    .style(|s| {
         s.flex_col()
             .width_pct(100.0)
             .height_pct(100.0)
@@ -162,7 +167,7 @@ fn icon_btn(glyph: &'static str, mut on_click: impl FnMut() + 'static) -> impl V
 
 // ── Content area ─────────────────────────────────────────────────────────────
 
-fn content_area(tab: RwSignal<BottomPanelTab>) -> impl View {
+fn content_area(tab: RwSignal<BottomPanelTab>, terminal_lines: RwSignal<Vec<String>>) -> impl View {
     container(
         h_stack((
             container(problems_view()).style(move |s| {
@@ -172,7 +177,7 @@ fn content_area(tab: RwSignal<BottomPanelTab>) -> impl View {
                     s.hide()
                 }
             }),
-            container(terminal_view()).style(move |s| {
+            container(terminal_view(terminal_lines)).style(move |s| {
                 if tab.get() == BottomPanelTab::Terminal {
                     s.flex_grow(1.0f32).height_pct(100.0)
                 } else {
@@ -299,13 +304,22 @@ fn diag_row(d: &'static Diagnostic) -> impl View {
 
 // ── Inline Terminal view ──────────────────────────────────────────────────────
 
-fn terminal_view() -> impl View {
+fn terminal_view(terminal_lines: RwSignal<Vec<String>>) -> impl View {
     scroll(
         v_stack((
             terminal_prompt_line(),
-            terminal_colored_line("> Configure project :TeamCode", ALLOY_ORANGE),
-            terminal_colored_line("> Task :TeamCode:assembleDebug", FG_2),
-            terminal_colored_line("BUILD SUCCESSFUL in 11s", STATUS_SUCCESS),
+            dyn_stack(
+                move || {
+                    terminal_lines
+                        .get()
+                        .into_iter()
+                        .enumerate()
+                        .collect::<Vec<_>>()
+                },
+                |(i, _)| *i,
+                |(_, line)| terminal_line(line),
+            )
+            .style(|s| s.flex_col()),
         ))
         .style(|s| {
             s.flex_col()
@@ -315,6 +329,24 @@ fn terminal_view() -> impl View {
         }),
     )
     .style(|s| s.flex_grow(1.0).width_pct(100.0).background(BG_NAVY))
+}
+
+fn terminal_line(text: String) -> impl View {
+    let color = if text.contains("BUILD SUCCESSFUL") {
+        STATUS_SUCCESS
+    } else if text.contains("BUILD FAILED") || text.contains("ERROR:") {
+        STATUS_ERROR
+    } else if text.starts_with("> Task") || text.starts_with("> Configure") {
+        ALLOY_ORANGE
+    } else {
+        FG_2
+    };
+    label(move || text.clone()).style(move |s| {
+        s.color(color)
+            .font_size(T_SMALL)
+            .font_family("monospace".to_string())
+            .padding_vert(2.0)
+    })
 }
 
 fn terminal_prompt_line() -> impl View {
@@ -349,12 +381,4 @@ fn terminal_prompt_line() -> impl View {
     .style(|s| s.items_center().margin_bottom(4.0))
 }
 
-fn terminal_colored_line(text: &'static str, color: floem::peniko::Color) -> impl View {
-    label(move || text.to_string()).style(move |s| {
-        s.color(color)
-            .font_size(T_SMALL)
-            .font_family("monospace".to_string())
-            .padding_vert(2.0)
-    })
-}
 use floem::views::scroll::scroll;
